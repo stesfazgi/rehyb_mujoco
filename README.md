@@ -1,4 +1,4 @@
-# rehyb_mujoco: Simulate NESM using MuJoCo
+# Upper-limb human=exoskeleton simulation
 
 ## New on the project?
 
