@@ -1,0 +1,139 @@
+<mujoco model="Model 1 (set-up)">
+    <!-- A model of the exoskeleton without generated support -->
+    <compiler meshdir="../static/meshes/"/>
+
+    <option timestep=".004" solver="Newton" tolerance="1e-9"/>
+    <size njmax="9000" nconmax="2000"/>
+
+    <default>
+        <default class="exoskeleton">
+            <joint type="hinge" damping=".2" limited="true" group="0"/>
+        </default>
+
+        <default class="exo_mesh">
+            <geom type="mesh" contype="0" conaffinity="0" group="0"/>
+            <default class="sAA">
+                <geom rgba=".1 .1 .1 1"/>
+            </default>
+            <default class="sFE">
+                <geom rgba=".34 .7 .3 1"/>
+            </default>
+            <default class="sIE">
+                <geom rgba=".35 .7 .87 1"/>
+            </default>
+            <default class="eFE">
+                <geom rgba=".93 .55 .16 1"/>
+            </default>
+        </default>
+
+        <default class="ua_support">
+            <geom contype="2" conaffinity="2" group="2" rgba=".35 .7 .87 1"/>
+        </default>
+
+        <default class="la_support">
+            <geom contype="4" conaffinity="4" group="2" rgba=".93 .55 .16 1"/>
+        </default>
+
+        <default class="exo_motor">
+            <motor ctrlrange="-1 1"/>
+        </default>
+
+        <default class="strap">
+            <equality solimp=".96 .99 .001 .5 2"/>
+        </default>
+    </default>
+
+    <asset>
+        <mesh name="sAA_vsR" file="sAA_very_simple.stl" scale="-.0007 -.0007 .0007"/>
+        <mesh name="sFE_vsR" file="sFE_very_simple.stl" scale="-.0007 -.0007 -.0007"/>
+        <mesh name="sIE_vsR" file="sIE_very_simple.stl" scale="-.0007 -.0007 .0007"/>
+        <mesh name="eFE_vsR" file="eFE_very_simple.stl" scale=".001 -.001 .001"/>
+
+        <texture type="skybox" builtin="gradient" rgb1=".6 .6 .9" rgb2="0 0 0" width="512" height="512"/>
+
+        <texture name="texplane" type="2d" builtin="checker" rgb1=".25 .25 .25" rgb2=".3 .3 .3" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
+        <material name="matplane" reflectance=".3" texture="texplane" texrepeat="1 1" texuniform="true"/>
+    </asset>
+
+    <visual>
+        <rgba haze=".35 .35 .5 1"/>
+    </visual>
+
+    <worldbody>
+        <geom name="floor" pos=".0 .0 -1.0" size="0 0 1" type="plane" material="matplane"/>
+        <light directional="true" diffuse=".8 .8 .8" specular=".2 .2 .2" pos=".0 .0 5.0" dir="0 0 -1"/>
+
+        <body name="Link1" childclass="exoskeleton">
+            <geom name="sAAr" mesh="sAA_vsR" pos="-.1421 0 0" class="sAA"/>
+            <inertial pos="0 0 0" mass="6.712" fullinertia=".1956839 .192833 .3787893 .0540633 .0006709 .0006556"/>
+
+            <joint name="J1" axis="1 0 0" range="-90 0"/>
+
+            <body name="Link2">
+                <geom name="sFEr" mesh="sFE_vsR" pos="-.14189 0 0" class="sFE"/>
+                <inertial pos="0 0 0" mass="3.487" fullinertia=".0689688 .0569634 .1108677 -.0384741 .0000977 .0000399"/>
+
+                <joint name="J2" axis="0 -1 0" range="-90 0"/>
+
+                <body name="Link3" pos=".3087 0 0">
+                    <geom name="sIEr" mesh="sIE_vsR" pos="-.41 0 0" class="sIE"/>
+                    <inertial pos="0 0 0" mass="1.663" fullinertia=".0235228 .007941 .0266938 .0038772 .0000556 -.0001282"/>
+
+                    <joint name="J3" axis="-1 0 0" range="-80 25"/>
+
+                    <body name="ua_strap" pos="-.168 .05 0" euler="90 0 0">
+                        <composite type="grid" count="3 8" spacing=".015" prefix="uarm_strap_">
+                            <geom type="sphere" size=".01" mass=".01" rgba=".2 .2 .2 1" contype="2" conaffinity="2" group="1"/>
+                            <tendon kind="main" group="3" rgba=".2 .2 .2 1"/>
+                            <skin rgba=".2 .2 .2 1" inflate=".01"/>
+                        </composite>
+                    </body>
+
+                    <body name="Link4" pos="-.02 0 -.005">
+                        <geom name="eFEr" mesh="eFE_vsR" pos="0 -.11 0" quat=".35355339 -.61237244 .61237244 -.35355339" class="eFE"/>
+                        <inertial pos="0 0 0" mass=".494" fullinertia=".0035498 .0037622 .0069974 -.001812 .0000009 -.0000004"/>
+
+                        <joint name="J4" axis="0 -1 0" range="0 125"/>
+
+                        <body name="la_strap" pos=".125 .02 0" euler="90 0 0">
+                            <composite type="grid" count="3 8" spacing=".015" prefix="larm_strap_">
+                                <geom type="sphere" size=".01" mass=".01" rgba=".2 .2 .2 1" contype="4" conaffinity="4" group="1"/>
+                                <tendon kind="main" group="3" rgba=".2 .2 .2 1"/>
+                                <skin rgba=".2 .2 .2 1" inflate=".01"/>
+                            </composite>
+                        </body>
+                    </body>
+                </body>
+            </body>
+        </body>
+    </worldbody>
+
+    <actuator>
+        <!-- Exoskeleton actuators -->
+        <motor name="sAA" gear="25" joint="J1" class="exo_motor"/>
+        <motor name="sFE" gear="25" joint="J2" class="exo_motor"/>
+        <motor name="sIE" gear="10" joint="J3" class="exo_motor"/>
+        <motor name="eFE" gear="10" joint="J4" class="exo_motor"/>
+    </actuator>
+
+    <equality>
+        <!-- upper arm strap -->
+        <weld body1="Link3" body2="uarm_strap_B0_7" relpose="-.183 .015 .045 1 0 0 0" class="strap"/>
+        <weld body1="Link3" body2="uarm_strap_B1_7" relpose="-.168 .015 .045 1 0 0 0" class="strap"/>
+        <weld body1="Link3" body2="uarm_strap_B2_7" relpose="-.153 .015 .045 1 0 0 0" class="strap"/>
+
+        <weld body1="Link3" body2="uarm_strap_B0_0" relpose="-.183 .015 -.045 1 0 0 0" class="strap"/>
+        <weld body1="Link3" body2="uarm_strap_B1_0" relpose="-.168 .015 -.045  1 0 0 0" class="strap"/>
+        <weld body1="Link3" body2="uarm_strap_B2_0" relpose="-.153 .015 -.045 1 0 0 0" class="strap"/>
+
+
+        <!-- lower arm strap -->
+        <weld body1="Link4" body2="larm_strap_B0_7" relpose=".110 -.0145 .045 1 0 0 0" class="strap"/>
+        <weld body1="Link4" body2="larm_strap_B1_7" relpose=".125 -.0145 .045 1 0 0 0" class="strap"/>
+        <weld body1="Link4" body2="larm_strap_B2_7" relpose=".140 -.0145 .045 1 0 0 0" class="strap"/>
+
+        <weld body1="Link4" body2="larm_strap_B0_0" relpose=".110 -.0145 -.045 1 0 0 0" class="strap"/>
+        <weld body1="Link4" body2="larm_strap_B1_0" relpose=".125 -.0145 -.045 1 0 0 0" class="strap"/>
+        <weld body1="Link4" body2="larm_strap_B2_0" relpose=".140 -.0145 -.045 1 0 0 0" class="strap"/>
+    </equality>
+</mujoco>

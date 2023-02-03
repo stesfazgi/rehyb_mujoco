@@ -1,0 +1,324 @@
+<mujoco model="NESM with patient demo">
+
+    <default>
+        <!-- Default damping to ensure stability -->
+        <joint damping=".2"/>
+
+        <!-- Translucent body -->
+        <default class="translucent_body">
+            <geom rgba=".8 .8 .8 .3"/>
+            <default class="hand">
+                <geom friction="1 0.005 0.001" contype="1" conaffinity="0"/>
+            </default>
+        </default>
+
+        <!-- Exoskeleton equivalence classes -->
+        <default class="exo_support">
+            <geom rgba=".2 .2 .2 1" contype="2" conaffinity="2"/>
+        </default>
+
+        <default class="J1-J3">
+            <geom rgba=".34 .7 .3 1"/>
+            <default class="J1-J2">
+                <geom contype="4" conaffinity="4"/>
+            </default>
+
+            <default class="J2-J3">
+                <geom contype="8" conaffinity="8"/>
+            </default>
+        </default>
+
+        <default class="J3-J4">
+            <geom rgba=".35 .7 .87 1"/>
+        </default>
+
+        <default class="J4-tip">
+            <geom rgba=".93 .55 .16 1"/>
+            <default class="J4-P6">
+                <geom contype="16" conaffinity="16"/>
+            </default>
+            <default class="P6-tip"/>
+        </default>
+
+        <!-- Tendons -->
+        <default class="muscle">
+            <site size=".01" rgba="1 1 1 1"/>
+            <default class="biceps">
+                <tendon width=".03" rgba=".9 .2 .2 .5"/>
+            </default>
+
+            <default class="triceps">
+                <tendon width=".025" rgba=".9 .2 .5 .5"/>
+            </default>
+        </default>
+        <default class="larm_strap">
+            <site size=".004" rgba=".3 .3 .95 1"/>
+            <tendon width=".002" limited="true" range="0 .02" rgba=".3 .3 .95 1"/>
+        </default>
+
+        <!-- Fingers -->
+
+    </default>
+
+    <size nconmax="600" njmax="5000" nstack="5000000"/>
+    <option solver="CG" tolerance="1e-6"/>
+
+    <asset>
+        <texture name="texplane" type="2d" builtin="checker" rgb1=".25 .25 .3" rgb2=".3 .3 .4" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
+
+        <material name="matplane" reflectance="0.3" texture="texplane" texrepeat="1 1" texuniform="true"/>
+    </asset>
+
+    <worldbody>
+        <light directional="true" cutoff="4" exponent="20" diffuse="1 1 1" specular="0 0 0" pos=".9 .3 2.5" dir="-.9 -.3 -2.5"/>
+
+        <geom name="floor" pos="0 0 -1" size="0 0 1" type="plane" material="matplane"/>
+
+        <body name="demo_support" pos=".4 0 -1">
+            <geom type="cylinder" size=".01" fromto="0 .3 0 0 .3 .7"/>
+            <geom type="cylinder" size=".01" fromto="0 -.3 0 0 -.3 .7"/>
+
+            <geom type="cylinder" size=".01" fromto="-.05 .3 .65 .1 .3 .8" mass="10"/>
+            <geom type="cylinder" size=".01" fromto=".05 .3 .65 -.1 .3 .8" mass="10"/>
+            <geom type="cylinder" size=".01" fromto="-.05 -.3 .65 .1 -.3 .8" mass="10"/>
+            <geom type="cylinder" size=".01" fromto=".05 -.3 .65 -.1 -.3 .8" mass="10"/>
+        </body>
+
+        <body name="to_be_grabbed" pos=".4 0 .72">
+            <freejoint/>
+            <geom type="cylinder" size=".02" fromto="0 -.4 0 0 .4 0" mass="5"/>
+        </body>
+
+        <body name="shoulder" childclass="translucent_body">
+            <geom name="clavicle_scapula" type="cylinder" fromto="0 0 0 0 .15 0" size=".03 .03" rgba="0 0 0 0"/>
+
+            <body name="torso" pos="0 .2 0">
+                <geom name="torso1" type="capsule" fromto="0 -.07 0 0 .07 0" size="0.07"/>
+                <geom name="head" type="sphere" pos="0 0 .19" size=".09"/>
+                <geom name="uwaist" type="capsule" fromto="-.01 -.06 -.12 -.01 .06 -.12" size="0.06"/>
+                <body name="lwaist" pos="-.01 0 -0.260" quat="1.000 0 -0.002 0">
+                    <geom name="lwaist" type="capsule" fromto="0 -.06 0 0 .06 0" size="0.06"/>
+                    <body name="pelvis" pos="0 0 -0.165" quat="1.000 0 -0.002 0">
+                        <geom name="butt" type="capsule" fromto="-.02 -.07 0 -.02 .07 0" size="0.09"/>
+                    </body>
+                </body>
+            </body>
+
+            <body name="upper_arm" pos="0 0 0">
+                <geom name="humerus_head" type="sphere" size=".05"/>
+                <geom name="uarm_shell" type="capsule" fromto=".085 0 0 .27 0 0" size=".04"/>
+                <inertial pos="0.131 0.0 0.0" mass="2.1" diaginertia="0.0063 0.0183 0.0205"/>
+
+                <joint name="shoulder_ball" type="ball" pos="0 0 0"/>
+
+                <!-- Muscle site -->
+                <site name="tri_bi" pos=".05 0 0" class="muscle"/>
+
+                <!-- Upper arm collider -->
+                <body name="uarm_soft_collider" euler="0 90 0" pos=".14 0 0">
+                    <composite type="cylinder" count="6 6 6" spacing="0.02" prefix="ua">
+                        <geom type="capsule" size=".01 0.03" rgba=".9 .9 .9 .5" mass=".001"/>
+                    </composite>
+                </body>
+
+                <body name="lower_arm" pos=".3367 0 0">
+                    <geom name="larm_shell" type="capsule" fromto="0 0 0 .20 0 0" size=".031"/>
+                    <inertial pos=".1 0 0" mass="0.5464" diaginertia="0.00045325 0.0030585 0.0030585"/>
+
+                    <joint name="elbow_flex" type="hinge" pos="-.0275 0 0" axis="0 1 0" limited="true" range="-125 0"/>
+
+                    <!-- Muscle sites -->
+                    <site name="biceps2" pos=".01 0 .02" class="muscle"/>
+
+                    <site name="triceps2" pos="-.07 0 -.02" class="muscle"/>
+                    <site name="triceps3" pos=".02 0 -.02" class="muscle"/>
+
+                    <!-- Lower arm collider -->
+                    <body name="larm_soft_collider" euler="0 90 0" pos=".09 0 0">
+                        <composite type="cylinder" count="5 5 8" spacing="0.02" prefix="la">
+                            <geom type="capsule" size=".01 .012" rgba=".9 .9 .9 .5" mass=".001"/>
+                        </composite>
+                    </body>
+
+                    <body name="radius">
+                        <geom name="radius" type="capsule" fromto="0 0 0 .2 0 0" size=".02" contype="0" conaffinity="0" rgba="0.8 0.2 0.2 0"/>
+                        <joint name="supi_pronation" type="hinge" axis="1 0 0" pos=".05 0 0" limited="true" range="-80 90"/>
+
+                        <inertial pos=".11 0 .01" mass="0.5464" diaginertia="0.00045325 0.0030585 0.0030585"/>
+
+                        <body name="palm" pos="0.25 0 0" euler="90 0 0" childclass="hand">
+                            <geom name="palm" type="box" size="0.045 0.04 0.01" pos="0.045 0 0" mass=".5"/>
+                            <joint name="w_abduction" type="hinge" axis="0 0 1" limited="true" range="-30 30"/>
+                            <joint name="w_flexion" type="hinge" axis="0 -1 0" limited="true" range="-70 70"/>
+
+                            <body name="fingers" pos=".09 0 0">
+                                <geom name="FFP" type="capsule" fromto=".00 .024 0 .03 .024 0" size="0.008" mass=".01"/>
+                                <geom name="MFP" type="capsule" fromto=".00 -.008 0 .03 -.008 0" size="0.008" mass=".01"/>
+                                <geom name="RFP" type="capsule" fromto=".00 .008 0 .03 .008 0" size="0.008" mass=".01"/>
+                                <geom name="LFP" type="capsule" fromto=".00 -.024 0 .03 -.024 0" size="0.008" mass=".01"/>
+
+                                <joint name="fingerFlex" type="hinge" axis="0 1 0" limited="true" range="0 90"/>
+
+                                <body name="fingers-tip">
+                                    <geom name="FFM" type="capsule" fromto=".03 .024 0 .06 .024 -.01" size="0.0075" mass=".01"/>
+                                    <geom name="RFM" type="capsule" fromto=".03 .008 0 .06 .008 -.01" size="0.0075" mass=".01"/>
+                                    <geom name="MFM" type="capsule" fromto=".03 -.008 0 .06 -.008 -.01" size="0.0075" mass=".01"/>
+                                    <geom name="LFM" type="capsule" fromto=".03 -.024 0 .06 -.024 -.01" size="0.0075" mass=".01"/>
+
+                                    <geom name="FFD" type="capsule" fromto=".06 .024 -.01	.075 .024 -.018" size="0.007" mass=".01"/>
+                                    <geom name="MFD" type="capsule" fromto=".06 -.008 -.01 .075 -.008 -.018" size="0.007" mass=".01"/>
+                                    <geom name="RFD" type="capsule" fromto=".06 .008 -.01 .075 .008 -.018" size="0.007" mass=".01"/>
+                                    <geom name="LFD" type="capsule" fromto=".06 -.024 -.01 .075 -.024 -.018" size="0.007" mass=".01"/>
+
+                                    <joint name="fingerFlex2" type="hinge" pos=".03 0 0" axis="0 1 0" limited="true" range="0 60"/>
+                                </body>
+                            </body>
+
+                            <body name="thumb" pos=".03 .04 0" euler="-90 0 0">
+                                <geom name="THP" type="capsule" fromto="0 0 0 .02 .07 -.01" size="0.009" mass=".005"/>
+                                <geom name="THM" type="capsule" fromto=".02 .07 -.01 .055 .07 -.01" size="0.009" mass=".005"/>
+                                <geom name="THD" type="capsule" fromto=".055 .07 -.01 .065 .068 -.01" size="0.009" mass=".005"/>
+
+                                <!-- <joint name="thumbFlex" type="hinge" pos="0 0 0" axis="1 -.4 0" limited="true" range="-90 20"/> -->
+                            </body>
+
+                        </body>
+                    </body>
+                </body>
+            </body>
+        </body>
+
+        <body name="Link0" zaxis="1 0 0" childclass="exo_support">
+            <geom type="box" pos="0 0 -.07" size=".02 .03 .001"/>
+
+            <body name="Link1" childclass="J1-J2">
+                <geom type="box" pos="0 -.07 0" size=".02 .001 .03"/>
+                <inertial pos="0 0 0" mass="6.712" fullinertia=".3787893 .192833 .1956839 -.0006556 -.0006709 .0540633"/>
+
+                <joint name="J1" type="hinge" axis="-1 0 0" limited="true" range="-90 0"/>
+
+                <body name="Link2" zaxis="0 -1 0 " childclass="J2-J3">
+                    <geom type="box" pos="-.07 0 0" size=".001 .03 .02"/>
+                    <inertial pos="0 0 0" mass="3.487" fullinertia=".1108677 .0689688 .0569634 -.0000977 .0000399 .0384741"/>
+
+                    <joint name="J2" type="hinge" axis="0 0 1" limited="true" range="-90 0"/>
+
+                    <body name="Link3" euler="-90 0 0" pos="0 .06 0" childclass="J3-J4">
+                        <geom type="box" name="ua_0" pos="0.0167 -0.054 0.08" size="0.005 0.0125 0.05" euler="0.0 0.0 -63.7"/>
+                        <geom type="box" name="ua_1" pos="0.0373 -0.0372 0.08" size="0.005 0.0125 0.05" euler="0.0 0.0 -38.2"/>
+                        <geom type="box" name="ua_2" pos="0.0487 -0.0133 0.08" size="0.005 0.0125 0.05" euler="0.0 0.0 -12.7"/>
+                        <geom type="box" name="ua_3" pos="0.0487 0.0133 0.08" size="0.005 0.0125 0.05" euler="0.0 0.0 12.7"/>
+                        <geom type="box" name="ua_4" pos="0.0373 0.0372 0.08" size="0.005 0.0125 0.05" euler="0.0 0.0 38.2"/>
+                        <geom type="box" name="ua_5" pos="0.0167 0.054 0.08" size="0.005 0.0125 0.05" euler="0.0 0.0 63.7"/>
+
+                        <inertial pos="0 0 0" mass="1.663" fullinertia=".0266938 .007941 .0235228 .0001282 -.0000556 .003877"/>
+
+                        <joint name="J3" type="hinge" axis="0 0 1" limited="true" range="-80 25"/>
+
+                        <body name="Link4" euler="90 0 0" pos="0 0 .2487" childclass="J4-P6">
+                            <geom type="box" pos=".05 0 0" size=".001 .03 .02"/>
+
+                            <joint name="J4" type="hinge" pos="0 0 0" axis="0 0 1" limited="true" range="0 125"/>
+                            <inertial pos="0 0 0" mass=".001" diaginertia=".001 .001 .001"/>
+
+
+                            <body name="exo_tip" childclass="P6-tip">
+                                <geom type="box" name="la_0" pos="0.0261 0.1 0.0412" size="0.005 0.05 0.00873" euler="0.0 -53.0 0.0"/>
+                                <geom type="box" name="la_1" pos="0.0389 0.1 0.0272" size="0.005 0.05 0.00873" euler="0.0 -31.8 0.0"/>
+                                <geom type="box" name="la_2" pos="0.0458 0.1 0.0095" size="0.005 0.05 0.00873" euler="0.0 -10.6 0.0"/>
+                                <geom type="box" name="la_3" pos="0.0458 0.1 -0.0095" size="0.005 0.05 0.00873" euler="0.0 10.6 0.0"/>
+                                <geom type="box" name="la_4" pos="0.0389 0.1 -0.0272" size="0.005 0.05 0.00873" euler="0.0 31.8 0.0"/>
+                                <geom type="box" name="la_5" pos="0.0261 0.1 -0.0412" size="0.005 0.05 0.00873" euler="0.0 53.0 0.0"/>
+
+                                <inertial pos="0 0 0" mass=".494" fullinertia=".0069974 .0035498 .0037622 -.0000009 -.0000004 .001812"/>
+
+                                <joint name="P6" type="slide" axis="0 1 0" limited="true" range="0 .035"/>
+
+                                <body name="strap" pos="-.1 .1 0" euler="0 90 0">
+                                    <composite type="grid" count="12 3" spacing=".015" prefix="strap_">
+                                        <geom type="sphere" size=".01" mass=".01"/>
+                                        <joint kind="twist"/>
+                                    </composite>
+                                </body>
+                            </body>
+                        </body>
+                    </body>
+                </body>
+            </body>
+        </body>
+    </worldbody>
+
+    <tendon>
+        <spatial name="biceps" class="biceps">
+            <site site="tri_bi"/>
+            <site site="biceps2"/>
+        </spatial>
+
+        <spatial name="triceps" class="triceps">
+            <site site="tri_bi"/>
+            <site site="triceps2"/>
+            <site site="triceps3"/>
+        </spatial>
+    </tendon>
+
+    <actuator>
+        <!-- Exoskeleton actuators -->
+        <motor name="sA/A" gear="50" joint="J1"/>
+        <motor name="sF/E" gear="50" joint="J2"/>
+        <motor name="sI/E" gear="10" joint="J3"/>
+        <motor name="eF/E" gear="50" joint="J4"/>
+
+        <!-- Shoulder muscles -->
+        <muscle name="s_flexion" scale="400" joint="shoulder_ball" gear="0 1 0" lengthrange=".3 2"/>
+        <muscle name="s_extension" scale="400" joint="shoulder_ball" gear="0 -1 0" lengthrange="-1 2"/>
+
+        <muscle name="s_abduction" scale="400" joint="shoulder_ball" gear="0 0 1" lengthrange=".1 2.7"/>
+        <muscle name="s_adduction" scale="400" joint="shoulder_ball" gear="0 0 -1" lengthrange="-.1 1.5"/>
+
+        <muscle name="s_intra" scale="10000" joint="shoulder_ball" gear="1 0 0" lengthrange=".01 1.5"/>
+        <muscle name="s_extra" scale="10000" joint="shoulder_ball" gear="-1 0 0" lengthrange=".1 1"/>
+
+        <!-- Elbow muscles -->
+        <muscle name="biceps" tendon="biceps" force="1000"/>
+        <muscle name="triceps" tendon="triceps" force="1000"/>
+
+        <muscle name='e_pronation' joint='supi_pronation' gear="1" force="70" lengthrange="-1 1"/>
+        <muscle name='e_supination' joint='supi_pronation' gear="-1" force="70" lengthrange="-1 1"/>
+
+        <!-- Wrist muscles -->
+        <muscle name="w_abduction" joint="w_abduction" gear="1" force="50" lengthrange="-1 1"/>
+        <muscle name="w_adduction" joint="w_abduction" gear="-1" force="50" lengthrange="-1 1"/>
+
+        <muscle name="w_flexion" joint="w_flexion" gear="1" force="50" lengthrange="-1 1"/>
+        <muscle name="w_extension" joint="w_flexion" gear="-1" force="50" lengthrange="-1 1"/>
+
+        <!-- Finger muscles -->
+        <muscle name="f_flexion" joint="fingerFlex" gear="-1" force="15" lengthrange="-1 -.1"/>
+        <muscle name="f_extension" joint="fingerFlex" gear="1" force="5" lengthrange="-1 .2"/>
+
+        <muscle name="f_flexion2" joint="fingerFlex2" gear="-1" force="15" lengthrange="-1 -.1"/>
+        <muscle name="f_extension2" joint="fingerFlex2" gear="1" force="5" lengthrange="-1 .2"/>
+
+        <!-- Thumb muscles -->
+        <!-- <muscle name="t_flexion" joint="thumbFlex" gear="1" force="10" lengthrange="-2 -.1"/>
+        <muscle name="t_extension" joint="thumbFlex" gear="-1" force="5" lengthrange="-1.4 -.3"/> -->
+
+    </actuator>
+
+    <contact>
+        <exclude body1="shoulder" body2="upper_arm"/>
+        <exclude body1="shoulder" body2="lower_arm"/>
+        <exclude body1="upper_arm" body2="lower_arm"/>
+    </contact>
+
+    <equality>
+        <weld body1="exo_tip" body2="strap_B11_0" relpose="0.015 0.082 0.045 1 0 0 0"/>
+        <weld body1="exo_tip" body2="strap_B0_0" relpose="0.015 0.082 -0.045 1 0 0 0"/>
+
+        <weld body1="exo_tip" body2="strap_B11_1" relpose="0.015 0.097 0.045 1 0 0 0"/>
+        <weld body1="exo_tip" body2="strap_B0_1" relpose="0.015 0.097 -0.045 1 0 0 0"/>
+
+        <weld body1="exo_tip" body2="strap_B11_2" relpose="0.015 0.112 0.045 1 0 0 0"/>
+        <weld body1="exo_tip" body2="strap_B0_2" relpose="0.015 0.112 -0.045 1 0 0 0"/>
+    </equality>
+</mujoco>

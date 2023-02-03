@@ -1,0 +1,149 @@
+<?xml version="1.0"?>
+<mujoco model="NESM with patient v11">
+    <compiler meshdir="../../../static/meshes"/>
+    <!-- elliptic cones are more realistic, however it is much slower -->
+    <option timestep=".005" solver="Newton" impratio="10." tolerance="1e-11" cone="pyramidal" jacobian="sparse" iterations="200"/>
+    <size njmax="12000" nconmax="2000"/>
+    <default>
+        <muscle ctrllimited="true" ctrlrange="0 1"/>
+        <site size=".005"/>
+        <!-- Human body -->
+        <default class="muscle">
+            <tendon width=".002"/>
+            <default class="shoulder_post">
+                <tendon rgba=".6 .2 .6 1"/>
+            </default>
+            <default class="shoulder_ant">
+                <tendon rgba=".8 .65 .3 1"/>
+            </default>
+            <default class="elbow_flex">
+                <tendon rgba=".9 .2 .2 1"/>
+            </default>
+            <default class="elbow_ext">
+                <tendon rgba=".2 .9 .2 1"/>
+            </default>
+            <default class="elbow_pron">
+                <tendon rgba=".85 .6 .2 1"/>
+            </default>
+            <default class="elbow_sup">
+                <tendon rgba=".2 .2 .7 1"/>
+            </default>
+        </default>
+        <default class="human_body">
+            <geom rgba=".5 .5 .5 .4" group="0"/>
+            <joint type="hinge" damping=".6" group="0"/>
+            <default class="arm">
+                <geom contype="1" conaffinity="1"/>
+                <default class="hand">
+                    <geom friction="1 .005 .001"/>
+                    <default class="finger">
+                        <geom type="capsule" mass=".01"/>
+                        <default class="finger_prox">
+                            <geom size=".008"/>
+                        </default>
+                        <default class="finger_med">
+                            <geom size=".0075"/>
+                        </default>
+                        <default class="finger_dist">
+                            <geom size=".007"/>
+                        </default>
+                        <default class="thumb">
+                            <geom size=".009" mass=".005"/>
+                        </default>
+                    </default>
+                </default>
+            </default>
+            <default class="torso">
+                <geom contype="7" conaffinity="7"/>
+            </default>
+        </default>
+        <default class="arm_hard_collider">
+            <joint type="hinge" limited="true" range="-.01 .01"/>
+            <geom solmix="10" solimp="1 1 .001 .5 2" rgba=".9 .6 .9 .7" group="2"/>
+            <default class="uarm_collider">
+                <geom contype="2" conaffinity="2"/>
+            </default>
+            <default class="larm_collider">
+                <geom contype="4" conaffinity="4"/>
+            </default>
+        </default>
+        <!-- Exoskeleton classes -->
+        <default class="exoskeleton">
+            <joint type="hinge" damping="1" limited="true" group="1"/>
+        </default>
+        <default class="exo_mesh">
+            <geom type="mesh" contype="0" conaffinity="0" group="1"/>
+            <default class="sAA">
+                <geom rgba=".1 .1 .1 1"/>
+            </default>
+            <default class="sFE">
+                <geom rgba=".34 .7 .3 1"/>
+            </default>
+            <default class="sIE">
+                <geom rgba=".35 .7 .87 1"/>
+            </default>
+            <default class="eFE">
+                <geom rgba=".93 .55 .16 1"/>
+            </default>
+        </default>
+        <default class="ua_support">
+            <geom contype="2" conaffinity="2" group="3" rgba=".35 .7 .87 1"/>
+        </default>
+        <default class="la_support">
+            <geom contype="4" conaffinity="4" group="3" rgba=".93 .55 .16 1"/>
+        </default>
+        <default class="exo_motor">
+            <motor ctrllimited="true" ctrlrange="-1 1"/>
+        </default>
+        <default class="strap">
+            <equality solimp=".96 .99 .001 .5 2"/>
+        </default>
+    </default>
+    <asset>
+        <texture type="skybox" builtin="gradient" rgb1=".6 .6 .9" rgb2="0 0 0" width="512" height="512"/>
+        <texture name="texplane" type="2d" builtin="checker" rgb1=".25 .25 .25" rgb2=".3 .3 .3" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
+        <material name="matplane" reflectance=".3" texture="texplane" texrepeat="1 1" texuniform="true"/>
+    </asset>
+    <visual>
+        <rgba haze=".3 .3 .3 1"/>
+    </visual>
+    <worldbody>
+        <geom name="floor" pos="0 0 -1" size="0 0 1" type="plane" material="matplane"/>
+        <light directional="true" diffuse=".8 .8 .8" specular=".2 .2 .2" pos="0 0 5" dir="0 0 -1"/>
+        <body name="humerus_r" childclass="arm">
+            <joint name="gh_y" axis="0 1 0" limited="true" range="-80 85"/>
+            <geom name="humerus_r" type="cylinder" size=".01" fromto="0 0 0 0.2907 -0.0058 -0.0049"/>
+            <inertial pos="0.14535 -0.0029 -0.00245" mass="1.761" diaginertia="0.0017830124999999998 0.013292833657500001 0.013292833657500001"/>
+
+            <body name="ua_soft_collider" pos="0.14 0 0">
+                <composite type="ellipsoid" count="9 5 5" spacing=".02" prefix="ua">
+                    <geom type="sphere" size=".01" rgba=".9 .9 .9 .5" mass=".003" contype="2" conaffinity="2" group="2"/>
+                </composite>
+            </body>
+        </body>
+        <body name="support" quat="0.5 -0.5 -0.5 0.5">
+            <include file="../../bin/models/arm_supports/upper_arm_support.xml"/>
+            <inertial pos="-0.0006 0.1679 -0.03" mass="1.663" fullinertia=".0266938 .007941 .0235228 .0001282 -.0000556 .0038772"/>
+
+            <body name="ua_strap" pos="0 -.05 -.133" euler="90 0 0">
+                <composite type="grid" count="8 3" spacing=".015" prefix="uarm_strap_">
+                    <geom type="sphere" size=".01" mass=".05" rgba=".2 .2 .2 1" contype="2" conaffinity="2" group="0" condim="6"/>
+                    <tendon kind="main" group="3" rgba=".2 .2 .2 1"/>
+                </composite>
+            </body>
+        </body>
+    </worldbody>
+    <actuator>
+        <!-- Exoskeleton actuators ctrlrange="-60 60" -->
+        <motor name="gh_y_act" gear="25" joint="gh_y" class="exo_motor"/>
+    </actuator>
+    <equality>
+        <!-- upper arm strap -->
+        <weld body1="support" body2="uarm_strap_B7_0" relpose=".045 -.03 -.148 1 0 0 0" class="strap"/>
+        <weld body1="support" body2="uarm_strap_B7_1" relpose=".045 -.03 -.133 1 0 0 0" class="strap"/>
+        <weld body1="support" body2="uarm_strap_B7_2" relpose=".045 -.03 -.118 1 0 0 0" class="strap"/>
+        <weld body1="support" body2="uarm_strap_B0_0" relpose="-.045 -.03 -.148 1 0 0 0" class="strap"/>
+        <weld body1="support" body2="uarm_strap_B0_1" relpose="-.045 -.03 -.133 1 0 0 0" class="strap"/>
+        <weld body1="support" body2="uarm_strap_B0_2" relpose="-.045 -.03 -.118 1 0 0 0" class="strap"/>
+    </equality>
+</mujoco>

@@ -1,0 +1,54 @@
+<mujoco model="test">
+    <option timestep="0.0006"></option>
+    <default>
+        <!-- Default damping to ensure stability -->
+        <joint damping=".2"/>
+
+        <!-- Translucent body -->
+        <default class="translucent">
+            <geom rgba=".8 .8 .8 1"/>
+        </default>
+
+        <default class="J4-tip">
+            <geom rgba=".93 .55 .16 1"/>
+        </default>
+    </default>
+
+    <option solver="CG" tolerance="1e-6"/>
+    <size nconmax="500" njmax="5000" nstack="5000000"/>
+
+    <worldbody>
+        <light directional="true" cutoff="4" exponent="20" diffuse="1 1 1" specular="0 0 0" pos=".9 .3 2.5" dir="-.9 -.3 -2.5"/>
+
+        <body name="Link4" euler="90 0 -90" pos="-.1 0 0" childclass="J4-tip">
+            <geom type="box" name="la_0" pos="0.0261 0.1 0.0412" size="0.005 0.05 0.00873" euler="0.0 -53.0 0.0"/>
+            <geom type="box" name="la_1" pos="0.0389 0.1 0.0272" size="0.005 0.05 0.00873" euler="0.0 -31.8 0.0"/>
+            <geom type="box" name="la_2" pos="0.0458 0.1 0.0095" size="0.005 0.05 0.00873" euler="0.0 -10.6 0.0"/>
+            <geom type="box" name="la_3" pos="0.0458 0.1 -0.0095" size="0.005 0.05 0.00873" euler="0.0 10.6 0.0"/>
+            <geom type="box" name="la_4" pos="0.0389 0.1 -0.0272" size="0.005 0.05 0.00873" euler="0.0 31.8 0.0"/>
+            <geom type="box" name="la_5" pos="0.0261 0.1 -0.0412" size="0.005 0.05 0.00873" euler="0.0 53.0 0.0"/>
+        </body>
+
+        <body name="forearm" euler="0 90 0" childclass="translucent">
+            <freejoint/>
+            <geom type="capsule" size=".01 .01 .01" conaffinity="0" contype="0" rgba="0.5 0.5 0.5 0"/>
+            <inertial pos="0 0 0" mass="1.23" diaginertia=".00805 .00746 .00156"/>
+
+            <body name="forearm_soft_collider">
+
+                <composite type="ellipsoid" count="5 5 12" spacing="0.02" prefix="la">
+                    <geom type="sphere" size=".0085 0.015" rgba=".8 .2 .1 .5" mass=".001" friction="1 0.5 0.001"/>
+                </composite>
+            </body>
+
+            <body name="bone">
+                <geom name="right_larm" type="capsule" fromto="0 0 -.06 0 0 .06" size=".01"/>
+            </body>
+        </body>
+
+    </worldbody>
+
+    <contact>
+        <exclude body1="forearm_soft_collider" body2="forearm"/>
+    </contact>
+</mujoco>

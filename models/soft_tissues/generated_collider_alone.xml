@@ -1,0 +1,14 @@
+<mujoco model="test">
+
+    <option solver="CG" tolerance="1e-6"/>
+    <size nconmax="500" njmax="5000" nstack="5000000"/>
+
+    <worldbody>
+        <light directional="true" cutoff="4" exponent="20" diffuse="1 1 1" specular="0 0 0" pos=".9 .3 2.5" dir="-.9 -.3 -2.5"/>
+
+        <body name="forearm_soft_collider">
+            <include file="../../bin/models/soft_tissues/test_collider.xml"/>
+        </body>
+
+    </worldbody>
+</mujoco>

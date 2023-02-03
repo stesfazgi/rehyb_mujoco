@@ -1,0 +1,12 @@
+# .ign_ prefix for local experimentation files
+.ign_**
+
+# VS code
+.vscode
+.env
+
+# python
+**/__pycache__
+
+# notebooks
+**/.ipynb_checkpoints

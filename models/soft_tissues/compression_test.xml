@@ -1,0 +1,57 @@
+<mujoco model="Compression test">
+    <default>
+        <!-- Default damping to ensure stability -->
+        <joint damping=".2"/>
+
+        <!-- Compressor box -->
+        <default class="cmp_box">
+            <geom type="box" size=".05 .005 .05"/>
+        </default>
+    </default>
+
+    <option timestep=".001" solver="Newton" tolerance="1e-9" cone="pyramidal" jacobian="sparse" iterations="200"/>
+    <size njmax="9000" nconmax="2000"/>
+
+    <worldbody>
+        <!-- Light -->
+        <light directional="true" cutoff="4" exponent="20" diffuse="1 1 1" specular="0 0 0" pos=".9 .3 2.5" dir="-.9 -.3 -2.5"/>
+
+        <!-- Compressor -->
+        <body name="wall">
+            <geom class="cmp_box"/>
+
+            <body name="compressor" pos="0 .4 0">
+                <geom class="cmp_box"/>
+                <!-- -y axis to ensure that compression occurs when ctrl>0 -->
+                <joint name="compression_rail" type="slide" axis="0 -1 0" limited="true" range="0 .4"/>
+            </body>
+        </body>
+
+
+        <!-- Horizontal Composite body -->
+        <body name="horizontal_collider" pos="0 .2 0" euler="90 0 0">
+            <!-- <joint type="slide"/>
+            <composite type="ellipsoid" count="5 5 10" spacing="0.02" prefix="la">
+                <geom type="sphere" size=".0085 0.015" rgba=".8 .2 .1 .1" mass=".001"/>
+            </composite>
+
+            <body name="bone">
+                <joint name="fake_joint" type="hinge" limited="true" range="-0.01 0.01"/>
+                <geom name="right_larm" type="capsule" fromto="0 0 -.05 0 0 .05" size=".015" solmix="10.0" solimp="1 1 0.001 0.5 2"/>
+            </body> -->
+        </body>
+
+        <!-- Vertical Composite body -->
+        <body name="vertical_collider" pos="0 .2 0">
+            <joint type="slide" axis="0 1 0"/>
+            <composite type="ellipsoid" count="5 5 10" spacing="0.02" prefix="la">
+                <geom type="ellipsoid" size=".0085 0.015" rgba=".8 .2 .1 .1" mass=".01"/>
+            </composite>
+        </body>
+    </worldbody>
+
+
+    <actuator>
+        <motor name="compressor_m" joint="compression_rail" gear="20"/>
+    </actuator>
+</mujoco>

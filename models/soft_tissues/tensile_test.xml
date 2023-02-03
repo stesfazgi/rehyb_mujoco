@@ -1,0 +1,59 @@
+<mujoco model="Tensile test">
+    <default>
+        <!-- Default damping to ensure stability -->
+        <joint damping=".2"/>
+
+        <!-- Extender box -->
+        <default class="ext_box">
+            <geom type="box" size=".005 .05 .05"/>
+        </default>
+    </default>
+
+    <option solver="CG" tolerance="1e-6"/>
+    <size nconmax="500" njmax="5000" nstack="5000000"/>
+
+    <worldbody>
+        <light directional="true" cutoff="4" exponent="20" diffuse="1 1 1" specular="0 0 0" pos=".9 .3 2.5" dir="-.9 -.3 -2.5"/>
+
+        <!-- Extender -->
+        <body name="wall">
+            <geom class="ext_box"/>
+
+            <body name="extender" pos=".4 0 0">
+                <geom class="ext_box"/>
+                <joint name="tension_rail" type="slide" axis="1 0 0" limited="true" range="-.1 5"/>
+            </body>
+        </body>
+
+        <!-- Horizontal composite body -->
+        <body name="horizontal_collider" pos=".2 0 0">
+            <joint type="slide" axis="1 0 0"/>
+            <composite type="ellipsoid" count="10 5 5" spacing="0.02" prefix="la">
+                <geom type="sphere" size=".0085 0.015" rgba=".8 .2 .1 .2" mass=".001"/>
+            </composite>
+        </body>
+
+        <!-- Vertical composite body -->
+        <!-- <body name="z_collider" pos=".2 0 0">
+            <joint type="slide" axis="1 0 0"/>
+            <composite type="ellipsoid" count="5 5 11" spacing="0.02" prefix="la">
+                <geom type="sphere" size=".0085 0.015" rgba=".8 .2 .1 .1" mass=".001"/>
+            </composite>
+        </body> -->
+
+    </worldbody>
+
+    <equality>
+        <!-- Horizontal collider -->
+        <weld body1="wall" body2="laB0_2_2"/>
+        <weld body1="extender" body2="laB9_2_2"/>
+
+        <!-- Vertical collider -->
+        <!-- <weld body1="wall" body2="laB0_2_5"/>
+        <weld body1="extender" body2="laB4_2_5"/> -->
+    </equality>
+
+    <actuator>
+        <motor name="extender_m" joint="tension_rail" gear="20"/>
+    </actuator>
+</mujoco> 

@@ -1,0 +1,33 @@
+<mujoco xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <!-- a basic model allowing to test on the fly modification of the inertial properties via mujoco-py
+see src_py/uncertainty/swing.py -->
+
+    <xacro:property name="s" value="1."/>
+
+    <!-- R is the radius of the cylinder, L the length, M the mass -->
+    <!-- the main axis of the cylinder is X -->
+    <xacro:macro name="x_cylinder_inertial" params="x y z R L M scale">
+        <inertial pos="${scale*x} ${scale*y} ${scale*z}" mass="${M}" diaginertia="${M*scale*scale*R*R/2} ${scale*scale*(M*R*R/4 + M*L*L/12)} ${scale*scale*(M*R*R/4 + M*L*L/12)}"/>
+    </xacro:macro>
+
+
+    <asset>
+        <texture type="skybox" builtin="gradient" rgb1=".6 .6 .9" rgb2="0 0 0" width="512" height="512"/>
+
+        <texture name="texplane" type="2d" builtin="checker" rgb1=".25 .25 .25" rgb2=".3 .3 .3" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
+        <material name="matplane" reflectance=".3" texture="texplane" texrepeat="1 1" texuniform="true"/>
+    </asset>
+
+    <worldbody>
+        <geom name="floor" pos="0 0 0" size="0 0 1" type="plane" material="matplane"/>
+        <light directional="true" diffuse=".8 .8 .8" specular=".2 .2 .2" pos="0 0 5" dir="0 0 -1"/>
+
+        <body name="pendulum">
+            <geom type="cylinder" fromto="0 0 .5 0 0 1" size=".05" rgba="0.5 0.5 0.8 1"/>
+            <!-- <inertial pos="0 0 .75" mass="10" diaginertia="1 2 1"/> -->
+            <xacro:x_cylinder_inertial x="0" y="0" z=".75" M="3.92699" R=".05" L=".5" scale="${s}"/>
+
+            <joint name="rot_axis" type="hinge" pos="0 0 1" axis="0 1 0" damping="1" limited="true" range="-90 90"/>
+        </body>
+    </worldbody>
+</mujoco>

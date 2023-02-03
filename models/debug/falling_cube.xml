@@ -1,0 +1,38 @@
+<!-- <?xml-model href="/home/piccolo/.mujoco/xsd-schema-mjcf/mujoco.xsd"?> -->
+<mujoco model="Falling cube">
+    <!-- Model helping to debug acceleration computation via mjc api -->
+
+    <asset>
+        <texture type="skybox" builtin="gradient" rgb1=".6 .6 .9" rgb2="0 0 0" width="512" height="512"/>
+
+        <texture name="texplane" type="2d" builtin="checker" rgb1=".25 .25 .25" rgb2=".3 .3 .3" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
+        <material name="matplane" reflectance=".3" texture="texplane" texrepeat="1 1" texuniform="true"/>
+    </asset>
+
+    <visual>
+        <rgba haze=".35 .35 .5 1"/>
+    </visual>
+
+    <worldbody>
+        <geom name="floor" pos=".0 .0 -1.0" size="0 0 1" type="plane" material="matplane"/>
+        <light directional="true" diffuse=".8 .8 .8" specular=".2 .2 .2" pos=".0 .0 5.0" dir="0 0 -1"/>
+
+        <body name="falling_cube">
+            <geom name="cube" type="box" size="0.1 0.1 0.1" rgba="0.9 0.5 0.5 1"/>
+            <!-- <freejoint name="free_joint"/> -->
+        </body>
+
+        <body name="pendulum">
+            <geom name="weight" type="sphere" pos="1. 1.5 0" size=".05 .05 .05" mass="1"/>
+            <geom name="pole" type="cylinder" fromto="1. 1. 0 1. 1.5 0" mass="0" size=".01"/>
+
+            <joint name="pend_axis" type="hinge" pos="1. 1. 0." axis="1 0 0" ref="90"/>
+        </body>
+
+    </worldbody>
+
+    <actuator>
+        <motor name="pend_ctrl" joint="pend_axis" gear="1 0 0 0 0 0"/>
+    </actuator>
+
+</mujoco>

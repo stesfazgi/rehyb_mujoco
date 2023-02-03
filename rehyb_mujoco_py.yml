@@ -1,0 +1,9 @@
+name: rehyb_mujoco_py
+dependencies:
+  - numpy
+  - pandas
+  - scipy
+  - matplotlib
+  - jupyter
+  - pip:
+      - mujoco-py==2.1.2.14

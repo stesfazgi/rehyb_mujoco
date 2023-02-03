@@ -1,0 +1,396 @@
+<mujoco model="NESM with patient v11" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <!-- General comment -->
+    <!-- It is assumed that the generated xml will be located in the generated_xml/xacro
+    directory. All relative paths are adjusted relatively to this convention. -->
+    <!-- End general comment -->
+
+    <!-- xacro properties and macros-->
+    <!-- Upper arm -->
+    <xacro:property name="scale_ua" value="1."/>
+
+    <xacro:macro name="site_ua" params="name x y z">
+        <site name="${name}" pos="${scale_ua*x} ${scale_ua*y} ${scale_ua*z}"/>
+    </xacro:macro>
+    <xacro:macro name="inertial_ua" params="x y z mass diaginertia">
+        <inertial pos="${scale_ua*x} ${scale_ua*y} ${scale_ua*z}" mass="${mass}" diaginertia="${diaginertia}"/>
+    </xacro:macro>
+    <xacro:macro name="fromto_geom_ua" params="name x y z">
+        <geom name="${name}" type="cylinder" size=".01" fromto="0 0 0 ${scale_ua*x} ${scale_ua*y} ${scale_ua*z}"/>
+    </xacro:macro>
+
+    <!-- Lower arm -->
+    <xacro:property name="scale_la" value="1."/>
+
+    <xacro:macro name="site_la" params="name x y z">
+        <site name="${name}" pos="${scale_la*x} ${scale_la*y} ${scale_la*z}"/>
+    </xacro:macro>
+    <xacro:macro name="inertial_la" params="x y z mass diaginertia">
+        <inertial pos="${scale_la*x} ${scale_la*y} ${scale_la*z}" mass="${mass}" diaginertia="${diaginertia}"/>
+    </xacro:macro>
+    <xacro:macro name="fromto_geom_la" params="name x y z">
+        <geom name="${name}" type="cylinder" size=".01" fromto="0 0 0 ${scale_la*x} ${scale_la*y} ${scale_la*z}"/>
+    </xacro:macro>
+
+    <!-- pos parameters of several bodies (in local frame) -->
+    <xacro:property name="ulna_r_x" value=".2907"/>
+    <xacro:property name="ulna_r_y" value="-.0058"/>
+    <xacro:property name="ulna_r_z" value="-.0049"/>
+
+    <xacro:property name="radius_r_x" value=".0133"/>
+    <xacro:property name="radius_r_y" value="-.0171"/>
+    <xacro:property name="radius_r_z" value=".0163"/>
+
+    <xacro:property name="hand_r_x" value=".265"/>
+    <xacro:property name="hand_r_y" value="0."/>
+    <xacro:property name="hand_r_z" value="0."/>
+
+    <!-- Parameters for upper and lower arm inertia cylinder -->
+    <!-- TODO: tune M_ua -->
+    <xacro:property name="R_ua" value=".045"/>
+    <xacro:property name="M_ua" value="2.0519"/>
+
+    <!-- TODO: tune M_la_1/2 -->
+    <xacro:property name="R_la" value=".03"/>
+    <xacro:property name="M_la_1" value=".5464"/>
+    <xacro:property name="M_la_2" value=".5"/>
+
+
+    <!-- Inertia of a cylinder; allows to tune upper and lower arm inertia -->
+    <!-- R is the radius of the cylinder, L the length, M the mass -->
+    <!-- s is the scale, x y z the position of the CoG -->
+    <!-- the main axis of the cylinder is X -->
+    <xacro:macro name="x_cylinder_inertial" params="x y z R L M s">
+        <inertial pos="${s*x} ${s*y} ${s*z}" mass="${M}" diaginertia="${M*s*s*R*R/2} ${s*s*(M*R*R/4 + M*L*L/12)} ${s*s*(M*R*R/4 + M*L*L/12)}"/>
+    </xacro:macro>
+    <!-- End xacro properties -->
+
+
+    <!-- elliptic cones are more realistic, however it is much slower -->
+    <option timestep=".009" solver="Newton" impratio="10." tolerance="1e-11" cone="pyramidal" jacobian="sparse" iterations="200"/>
+    <size njmax="12000" nconmax="2000"/>
+
+
+    <default>
+        <muscle ctrllimited="true" ctrlrange="0 1"/>
+        <site size=".005"/>
+
+        <!-- Human body -->
+        <default class="muscle">
+            <tendon width=".002"/>
+
+            <default class="shoulder_post">
+                <tendon rgba=".6 .2 .6 1"/>
+            </default>
+
+            <default class="shoulder_ant">
+                <tendon rgba=".8 .65 .3 1"/>
+            </default>
+
+            <default class="elbow_flex">
+                <tendon rgba=".9 .2 .2 1"/>
+            </default>
+
+            <default class="elbow_ext">
+                <tendon rgba=".2 .9 .2 1"/>
+            </default>
+
+            <default class="elbow_pron">
+                <tendon rgba=".85 .6 .2 1"/>
+            </default>
+
+            <default class="elbow_sup">
+                <tendon rgba=".2 .2 .7 1"/>
+            </default>
+        </default>
+
+        <default class="human_body">
+            <geom rgba=".5 .5 .5 .4" group="0"/>
+            <joint type="hinge" damping=".6" group="0"/>
+
+            <default class="arm">
+                <geom contype="1" conaffinity="1"/>
+
+                <default class="hand">
+                    <geom friction="1 .005 .001"/>
+                    <default class="finger">
+                        <geom type="capsule" mass=".01"/>
+                        <default class="finger_prox">
+                            <geom size=".008"/>
+                        </default>
+                        <default class="finger_med">
+                            <geom size=".0075"/>
+                        </default>
+                        <default class="finger_dist">
+                            <geom size=".007"/>
+                        </default>
+                        <default class="thumb">
+                            <geom size=".009" mass=".005"/>
+                        </default>
+                    </default>
+                </default>
+            </default>
+
+            <default class="torso">
+                <geom contype="7" conaffinity="7"/>
+            </default>
+        </default>
+
+        <default class="arm_hard_collider">
+            <joint type="hinge" limited="true" range="-.01 .01"/>
+            <geom solmix="10" solimp="1 1 .001 .5 2" rgba=".9 .6 .9 .7" group="2"/>
+            <default class="uarm_collider">
+                <geom contype="2" conaffinity="2"/>
+            </default>
+            <default class="larm_collider">
+                <geom contype="4" conaffinity="4"/>
+            </default>
+        </default>
+
+    </default>
+
+    <asset>
+        <texture type="skybox" builtin="gradient" rgb1=".6 .6 .9" rgb2="0 0 0" width="512" height="512"/>
+
+        <texture name="texplane" type="2d" builtin="checker" rgb1=".25 .25 .25" rgb2=".3 .3 .3" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
+        <material name="matplane" reflectance=".3" texture="texplane" texrepeat="1 1" texuniform="true"/>
+    </asset>
+
+    <visual>
+        <rgba haze=".3 .3 .3 1"/>
+    </visual>
+
+    <worldbody>
+        <geom name="floor" pos="0 0 -1" size="0 0 1" type="plane" material="matplane"/>
+        <light directional="true" diffuse=".8 .8 .8" specular=".2 .2 .2" pos="0 0 5" dir="0 0 -1"/>
+
+        <body name="thorax" pos="-.0157 .2097 .0231" childclass="torso">
+            <geom name="torso1" type="capsule" fromto=".0634 -.0586 -.0437 .0634 .0814 -.0437" size=".07"/>
+            <geom name="head" type="sphere" pos=".0634 .0114 .1463" size=".09"/>
+            <geom name="uwaist" type="capsule" fromto=".0534 -.0486 -.1637 .0534 .0714 -.1637" size=".06"/>
+            <geom name="lwaist" type="capsule" fromto=".0534 -.0486 -.3037 .0534 .0714 -.3037" size=".06"/>
+            <geom name="butt" type="capsule" fromto=".033 -.0586 -.4687 .033 .0814 -.4687" size=".09"/>
+
+            <body name="clavicle_r">
+                <geom name="clavicle_r" type="cylinder" size=".01" fromto="0 0 0 -.0282 -.2077 -.0001"/>
+
+                <body name="scapula_r" pos="-.0282 -.2077 -.0001">
+
+                    <geom name="scapula_r" type="cylinder" size=".01" fromto="0 0 0 .0439 -.002 -.023"/>
+                    <inertial pos=".0247 .053 -.0229" mass=".7054" diaginertia=".001 .001 .001"/>
+
+                    <!-- Elbow flexor/extensor sites -->
+                    <site name="bic_l-P1" pos=".04288 .01401 -.00249"/>
+                    <site name="bic_b_avg-P1" pos=".08244 .00915 -.00833"/>
+                    <site name="tric_long_avg-P2" pos=".03083 .02581 -.04169"/>
+                </body>
+            </body>
+        </body>
+
+        <body name="humerus_r" childclass="arm">
+            <xacro:fromto_geom_ua name="humerus_r" x=".2907" y="-.0058" z="-.0049"/>
+            <xacro:x_cylinder_inertial x="${ulna_r_x/2}" y="${ulna_r_y/2}" z="${ulna_r_z/2}" R="${R_ua}" L="${ulna_r_x}" M="${M_ua}" s="${scale_ua}"/>
+
+
+            <!-- Elbow flexor/extensor sites -->
+            <xacro:site_ua name="tric_med_avg-P1" x=".17415" y=".001432" z="-.00827"/>
+            <xacro:site_ua name="tric_lat_avg-P1" x=".07102" y="-.00863" z="-.010792"/>
+            <xacro:site_ua name="bic_l-P2" x="-.0001" y="-.0217" z=".0011"/>
+            <xacro:site_ua name="brachialis_avg-P1" x=".16994" y=".00421" z="-.00129"/>
+            <xacro:site_ua name="brachiorad_avg-P1" x=".21716" y="-.00443" z=".002"/>
+            <xacro:site_ua name="anconeus_avg-P1" x=".30395" y="-.01346" z="-.01568"/>
+
+            <body name="ua_soft_collider" pos="${scale_ua*.14} 0 0">
+                <composite type="ellipsoid" count="9 5 5" spacing=".02" prefix="ua">
+                    <geom type="sphere" size=".01" rgba=".9 .9 .9 .5" mass=".003" contype="2" conaffinity="2" group="2"/>
+                </composite>
+            </body>
+
+            <body name="ulna_r" pos="${scale_ua*ulna_r_x} ${scale_ua*ulna_r_y} ${scale_ua*ulna_r_z}">
+
+                <joint name="el_x" axis="0 -1 0" limited="true" range="0 120"/>
+
+                <xacro:fromto_geom_la name="ulna_r" x=".0133" y="-.0171" z=".0163"/>
+                <xacro:x_cylinder_inertial x="${(hand_r_x+radius_r_x)/2}" y="${(hand_r_y+radius_r_y)/2}" z="${(hand_r_z+radius_r_z)/2}" R="${R_la}" L="${hand_r_x}" M="${M_la_1}" s="${scale_la}"/>
+
+                <!-- Elbow flexor/extensor sites -->
+                <xacro:site_la name="tric_long_avg-P1" x="-.01682" y=".00657" z="-.02635"/>
+                <xacro:site_la name="tric_med_avg-P2" x="-.01771" y=".02561" z="-.02364"/>
+                <xacro:site_la name="tric_lat_avg-P2" x="-.02348" y=".02012" z="-.02043"/>
+                <xacro:site_la name="brachialis_avg-P2" x=".03331" y=".01924" z=".00854"/>
+                <xacro:site_la name="anconeus_avg-P2" x=".03161" y="-.00914" z="-.00822"/>
+
+                <!-- Elbow supinator/pronator sites -->
+                <xacro:site_la name="supinator_avg-P1" x=".05441" y="-.01" z="-.00598"/>
+                <xacro:site_la name="pron_teres_avg-P1" x=".02454" y="-.0378" z="-.01437"/>
+                <xacro:site_la name="pron_quad_avg-P1" x=".226" y="-.0171" z="-.015"/>
+
+                <body name="la_soft_collider" pos="${scale_la*.12} ${scale_la*-.01} ${scale_la*.015}">
+                    <composite type="ellipsoid" count="9 4 4" spacing=".02" prefix="la">
+                        <geom type="sphere" size=".01" rgba=".9 .9 .9 .5" mass=".003" contype="4" conaffinity="4" group="2"/>
+                    </composite>
+                </body>
+
+                <body name="radius_r" pos="${scale_la*radius_r_x} ${scale_la*radius_r_y} ${scale_la*radius_r_z}">
+                    <joint name="ps_z" axis="-1 0 0" limited="true" range="-180 -5"/>
+
+                    <xacro:fromto_geom_la name="radius_r" x=".263" y="0" z="0"/>
+                    <xacro:x_cylinder_inertial x="${hand_r_x/2}" y="${hand_r_y/2}" z="${hand_r_z/2}" R="${R_la}" L="${hand_r_x}" M="${M_la_2}" s="${scale_la}"/>
+
+                    <!-- Elbow flexor/extensor sites -->
+                    <xacro:site_la name="bic_l-P3" x=".03809" y=".00282" z=".00202"/>
+                    <xacro:site_la name="bic_b_avg-P2" x=".03809" y=".00282" z=".00202"/>
+                    <xacro:site_la name="brachiorad_avg-P2" x=".26513" y=".00412" z=".01037"/>
+
+                    <!-- Elbow supinator/pronator sites -->
+                    <xacro:site_la name="supinator_avg-P2" x=".09092" y="-.01699" z=".0169"/>
+                    <xacro:site_la name="pron_teres_avg-P2" x=".08157" y="-.016" z="-.04041"/>
+                    <xacro:site_la name="pron_quad_avg-P2" x=".21322" y="0" z="-.015"/>
+
+                    <body name="hand_r" pos="${scale_la*hand_r_x} ${scale_la*hand_r_y} ${scale_la*hand_r_z}" childclass="hand">
+                        <geom name="palm" type="box" size=".045 .04 .01" pos=".045 0 0" mass=".5"/>
+
+                        <joint name="w_abduction" axis="0 0 -1" limited="true" range="-20 20"/>
+                        <joint name="w_flexion" axis="0 1 0" limited="true" range="-70 70"/>
+
+                        <body name="fingers_prox" pos=".09 0 0" childclass="finger_prox">
+                            <geom name="FFP" fromto="0 .024 0 .03 .024 0"/>
+                            <geom name="MFP" fromto="0 -.008 0 .03 -.008 0"/>
+                            <geom name="RFP" fromto="0 .008 0 .03 .008 0"/>
+                            <geom name="LFP" fromto="0 -.024 0 .03 -.024 0"/>
+
+                            <joint name="f_flex_prox" axis="0 1 0" limited="true" range="0 90"/>
+
+                            <body name="fingers_med" pos=".03 0 0" childclass="finger_med">
+                                <geom name="FFM" fromto="0 .024 0 .03 .024 -.01"/>
+                                <geom name="RFM" fromto="0 .008 0 .03 .008 -.01"/>
+                                <geom name="MFM" fromto="0 -.008 0 .03 -.008 -.01"/>
+                                <geom name="LFM" fromto="0 -.024 0 .03 -.024 -.01"/>
+
+                                <joint name="f_flex_med" axis="0 1 0" limited="true" range="0 60"/>
+
+                                <body name="fingers_dist" childclass="finger_dist">
+                                    <geom name="FFD" fromto=".03 .024 -.01 .045 .024 -.018"/>
+                                    <geom name="MFD" fromto=".03 -.008 -.01 .045 -.008 -.018"/>
+                                    <geom name="RFD" fromto=".03 .008 -.01 .045 .008 -.018"/>
+                                    <geom name="LFD" fromto=".03 -.024 -.01 .045 -.024 -.018"/>
+                                </body>
+                            </body>
+                        </body>
+
+                        <body name="thumb" pos=".03 .04 0" childclass="thumb">
+                            <geom name="THP" fromto="0 0 0 .02 .025 -.01"/>
+                            <geom name="THM" fromto=".02 .025 -.01 .045 .035 -.018"/>
+                            <geom name="THD" fromto=".045 .035 -.018 .058 .035 -.022"/>
+
+                            <joint name="t_flex" axis="1 -.4 0" limited="true" range="-90 20"/>
+                        </body>
+                    </body>
+                </body>
+            </body>
+
+        </body>
+    </worldbody>
+
+
+    <tendon>
+        <!-- Elbow flexion extension -->
+        <spatial name="bic_l" class="elbow_flex">
+            <site site="bic_l-P1"/>
+            <site site="bic_l-P2"/>
+            <site site="bic_l-P3"/>
+        </spatial>
+        <spatial name="bic_b_avg" class="elbow_flex">
+            <site site="bic_b_avg-P1"/>
+            <site site="bic_b_avg-P2"/>
+        </spatial>
+        <spatial name="brachialis_avg" class="elbow_flex">
+            <site site="brachialis_avg-P1"/>
+            <site site="brachialis_avg-P2"/>
+        </spatial>
+        <spatial name="brachiorad_avg" class="elbow_flex">
+            <site site="brachiorad_avg-P1"/>
+            <site site="brachiorad_avg-P2"/>
+        </spatial>
+
+        <spatial name="tric_long_avg" class="elbow_ext">
+            <site site="tric_long_avg-P1"/>
+            <site site="tric_long_avg-P2"/>
+        </spatial>
+        <spatial name="tric_med_avg" class="elbow_ext">
+            <site site="tric_med_avg-P1"/>
+            <site site="tric_med_avg-P2"/>
+        </spatial>
+        <spatial name="tric_lat_avg" class="elbow_ext">
+            <site site="tric_lat_avg-P1"/>
+            <site site="tric_lat_avg-P2"/>
+        </spatial>
+        <spatial name="anconeus_avg" class="elbow_ext">
+            <site site="anconeus_avg-P1"/>
+            <site site="anconeus_avg-P2"/>
+        </spatial>
+
+        <!-- Elbow pronation supination -->
+        <spatial name="pron_teres_avg" class="elbow_pron">
+            <site site="pron_teres_avg-P1"/>
+            <site site="pron_teres_avg-P2"/>
+        </spatial>
+        <spatial name="pron_quad_avg" class="elbow_pron">
+            <site site="pron_quad_avg-P1"/>
+            <site site="pron_quad_avg-P2"/>
+        </spatial>
+
+        <spatial name="supinator_avg" class="elbow_sup">
+            <site site="supinator_avg-P1"/>
+            <site site="supinator_avg-P2"/>
+        </spatial>
+    </tendon>
+
+    <actuator>
+        <!-- Elbow flexion extension -->
+        <muscle name="tric_long_avg" tendon="tric_long_avg" force="798.5"/>
+        <muscle name="tric_med_avg" tendon="tric_med_avg" force="624.3"/>
+        <muscle name="tric_lat_avg" tendon="tric_lat_avg" force="624.3"/>
+        <muscle name="anconeus_avg" tendon="anconeus_avg" force="350"/>
+
+        <muscle name="bic_b_avg" tendon="bic_b_avg" force="624.3"/>
+        <muscle name="bic_l" tendon="bic_l" force="435.6"/>
+        <muscle name="brachialis_avg" tendon="brachialis_avg" force="987.3"/>
+        <muscle name="brachiorad_avg" tendon="brachiorad_avg" force="261.3"/>
+
+        <!-- Elbow pronation supination -->
+        <muscle name="pron_teres_avg" tendon="pron_teres_avg" force="566.2" lengthrange=".072 .11"/>
+        <muscle name="pron_quad_avg" tendon="pron_quad_avg" force="75.5" lengthrange=".016 .046"/>
+
+        <muscle name="supinator_avg" tendon="supinator_avg" force="476" lengthrange=".05 .067"/>
+
+        <!-- Wrist muscles -->
+        <muscle name="w_abduction" joint="w_abduction" gear="1" force="50" lengthrange="-1 1"/>
+        <muscle name="w_adduction" joint="w_abduction" gear="-1" force="50" lengthrange="-1 1"/>
+
+        <muscle name="w_flexion" joint="w_flexion" gear="-1" force="50" lengthrange="-1 1"/>
+        <muscle name="w_extension" joint="w_flexion" gear="1" force="50" lengthrange="-1 1"/>
+
+        <!-- Finger muscles -->
+        <muscle name="f_flex_prox" joint="f_flex_prox" gear="-1" force="15" lengthrange="-1 -.1"/>
+        <muscle name="f_ext_prox" joint="f_flex_prox" gear="1" force="5" lengthrange="-1 .2"/>
+
+        <muscle name="f_flex_med" joint="f_flex_med" gear="-1" force="15" lengthrange="-1 -.1"/>
+        <muscle name="f_ext_med" joint="f_flex_med" gear="1" force="5" lengthrange="-1 .2"/>
+
+        <!-- Thumb muscles -->
+        <muscle name="t_flex" joint="t_flex" gear="1" force="10" lengthrange="-2 -.1"/>
+        <muscle name="t_ext" joint="t_flex" gear="-1" force="5" lengthrange="-1.4 -.3"/>
+    </actuator>
+
+    <contact>
+        <exclude body1="clavicle_r" body2="scapula_r"/>
+        <exclude body1="scapula_r" body2="humerus_r"/>
+        <exclude body1="humerus_r" body2="ulna_r"/>
+        <exclude body1="humerus_r" body2="radius_r"/>
+        <exclude body1="ulna_r" body2="radius_r"/>
+        <exclude body1="radius_r" body2="hand_r"/>
+        <exclude body1="hand_r" body2="fingers_prox"/>
+        <exclude body1="fingers_prox" body2="fingers_med"/>
+    </contact>
+
+</mujoco>

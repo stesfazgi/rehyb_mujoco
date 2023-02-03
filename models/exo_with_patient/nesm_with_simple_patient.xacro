@@ -1,0 +1,599 @@
+<mujoco model="NESM with simple patient" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <!-- include path properties -->
+    <!-- It is assumed that the generated xml will be located in the 'bin/models/exo_with_patient'
+    directory. All relative paths are adjusted accordingly. -->
+    <xacro:property name="path_to_root" value="../../.."/>
+    <xacro:property name="arm_supports_folder" value="bin/models/arm_supports"/>
+    <xacro:property name="meshes_folder" value="static/meshes"/>
+
+    <!-- xacro properties and macros-->
+    <!-- Upper arm -->
+    <!-- The rescaling .86267 shown below ensures elbow joint alignment for scale_ua = 1. -->
+    <xacro:property name="scale_ua" value="1."/>
+    <xacro:property name="rescaling_ua" value=".86267"/>
+
+    <xacro:macro name="site_ua" params="name x y z">
+        <site name="${name}" pos="${scale_ua*rescaling_ua*x} ${scale_ua*rescaling_ua*y} ${scale_ua*rescaling_ua*z}"/>
+    </xacro:macro>
+    <xacro:macro name="inertial_ua" params="x y z mass diaginertia">
+        <inertial pos="${scale_ua*rescaling_ua*x} ${scale_ua*rescaling_ua*y} ${scale_ua*rescaling_ua*z}" mass="${mass}" diaginertia="${diaginertia}"/>
+    </xacro:macro>
+    <xacro:macro name="fromto_geom_ua" params="name x y z">
+        <geom name="${name}" type="cylinder" size=".01" fromto="0 0 0 ${scale_ua*rescaling_ua*x} ${scale_ua*rescaling_ua*y} ${scale_ua*rescaling_ua*z}"/>
+    </xacro:macro>
+
+    <!-- Lower arm -->
+    <xacro:property name="scale_la" value="1."/>
+
+    <xacro:macro name="site_la" params="name x y z">
+        <site name="${name}" pos="${scale_la*x} ${scale_la*y} ${scale_la*z}"/>
+    </xacro:macro>
+    <xacro:macro name="inertial_la" params="x y z mass diaginertia">
+        <inertial pos="${scale_la*x} ${scale_la*y} ${scale_la*z}" mass="${mass}" diaginertia="${diaginertia}"/>
+    </xacro:macro>
+    <xacro:macro name="fromto_geom_la" params="name x y z">
+        <geom name="${name}" type="cylinder" size=".01" fromto="0 0 0 ${scale_la*x} ${scale_la*y} ${scale_la*z}"/>
+    </xacro:macro>
+
+    <!-- pos parameters of several bodies (in local frame) -->
+    <xacro:property name="ulna_r_x" value=".2907"/>
+    <xacro:property name="ulna_r_y" value="-.0058"/>
+    <xacro:property name="ulna_r_z" value="-.0049"/>
+
+    <xacro:property name="radius_r_x" value=".0133"/>
+    <xacro:property name="radius_r_y" value="-.0171"/>
+    <xacro:property name="radius_r_z" value=".0163"/>
+
+    <xacro:property name="hand_r_x" value=".265"/>
+    <xacro:property name="hand_r_y" value="0."/>
+    <xacro:property name="hand_r_z" value="0."/>
+
+    <!-- Parameters for upper and lower arm inertia cylinder -->
+    <xacro:property name="R_ua" value=".045"/>
+    <xacro:property name="M_ua" value="1.761"/>
+
+    <xacro:property name="R_la" value=".03"/>
+    <xacro:property name="M_la" value=".962"/>
+    <!-- ulna_M_frac has to be in ]0;1[ (M_la is shared between ulna and radius) -->
+    <xacro:property name="ulna_M_frac" value=".5"/>
+
+    <!-- Inertia of a cylinder; allows to tune upper and lower arm inertia -->
+    <!-- R is the radius of the cylinder, L the length, M the mass -->
+    <!-- s is the scale, x y z the position of the CoG -->
+    <!-- the main axis of the cylinder is X -->
+    <xacro:macro name="x_cylinder_inertial" params="x y z R L M s">
+        <inertial pos="${s*x} ${s*y} ${s*z}" mass="${M}" diaginertia="${M*s*s*R*R/2} ${s*s*(M*R*R/4 + M*L*L/12)} ${s*s*(M*R*R/4 + M*L*L/12)}"/>
+    </xacro:macro>
+
+
+    <!-- muscle properties -->
+    <xacro:property name="tric_long_avg_F" value="798.5"/>
+    <xacro:property name="tric_med_avg_F" value="624.3"/>
+    <xacro:property name="tric_lat_avg_F" value="624.3"/>
+    <xacro:property name="anconeus_avg_F" value="350"/>
+    <xacro:property name="bic_b_avg_F" value="624.3"/>
+    <xacro:property name="bic_l_F" value="435.6"/>
+    <xacro:property name="brachialis_avg_F" value="987.3"/>
+    <xacro:property name="brachiorad_avg_F" value="261.3"/>
+
+    <!-- muscle scaling -->
+    <xacro:property name="flex_F_scale" value=".71"/>
+    <xacro:property name="ext_F_scale" value="1.23"/>
+    <xacro:property name="flex_range" value="0.95 1.2"/>
+    <xacro:property name="ext_range" value="0.7 .9"/>
+    <!-- End xacro properties -->
+
+
+    <compiler meshdir="${path_to_root}/${meshes_folder}"/>
+
+    <!-- elliptic cones are more realistic, however it is much slower gravity=".0 .0 .0" -->
+    <option timestep=".005" solver="Newton" impratio="10." tolerance="1e-11" cone="pyramidal" jacobian="sparse" iterations="200"/>
+    <size njmax="12000" nconmax="2000"/>
+
+
+    <default>
+        <muscle ctrllimited="true" ctrlrange="0 1"/>
+        <site size=".005"/>
+
+        <!-- Human body -->
+        <default class="muscle">
+            <tendon width=".002"/>
+
+            <default class="shoulder_post">
+                <tendon rgba=".6 .2 .6 1"/>
+            </default>
+
+            <default class="shoulder_ant">
+                <tendon rgba=".8 .65 .3 1"/>
+            </default>
+
+            <default class="elbow_flex">
+                <tendon rgba=".9 .2 .2 1"/>
+            </default>
+
+            <default class="elbow_ext">
+                <tendon rgba=".2 .9 .2 1"/>
+            </default>
+
+            <default class="elbow_pron">
+                <tendon rgba=".85 .6 .2 1"/>
+            </default>
+
+            <default class="elbow_sup">
+                <tendon rgba=".2 .2 .7 1"/>
+            </default>
+        </default>
+
+        <default class="human_body">
+            <geom rgba=".5 .5 .5 .4" group="0"/>
+            <joint type="hinge" damping=".6" group="0"/>
+
+            <default class="arm">
+                <geom contype="1" conaffinity="1"/>
+
+                <default class="hand">
+                    <geom friction="1 .005 .001"/>
+                    <default class="finger">
+                        <geom type="capsule" mass=".01"/>
+                        <default class="finger_prox">
+                            <geom size=".008"/>
+                        </default>
+                        <default class="finger_med">
+                            <geom size=".0075"/>
+                        </default>
+                        <default class="finger_dist">
+                            <geom size=".007"/>
+                        </default>
+                        <default class="thumb">
+                            <geom size=".009" mass=".005"/>
+                        </default>
+                    </default>
+                </default>
+            </default>
+
+            <default class="torso">
+                <geom contype="7" conaffinity="7"/>
+            </default>
+        </default>
+
+        <default class="arm_hard_collider">
+            <joint type="hinge" limited="true" range="-.01 .01"/>
+            <geom solmix="10" solimp="1 1 .001 .5 2" rgba=".9 .6 .9 .7" group="2"/>
+            <default class="uarm_collider">
+                <geom contype="2" conaffinity="2"/>
+            </default>
+            <default class="larm_collider">
+                <geom contype="4" conaffinity="4"/>
+            </default>
+        </default>
+
+        <!-- Exoskeleton classes -->
+        <default class="exoskeleton">
+            <joint type="hinge" damping="1" limited="true" group="1"/>
+        </default>
+
+        <default class="exo_mesh">
+            <geom type="mesh" contype="0" conaffinity="0" group="1"/>
+            <default class="sAA">
+                <geom rgba=".1 .1 .1 1"/>
+            </default>
+            <default class="sFE">
+                <geom rgba=".34 .7 .3 1"/>
+            </default>
+            <default class="sIE">
+                <geom rgba=".35 .7 .87 1"/>
+            </default>
+            <default class="eFE">
+                <geom rgba=".93 .55 .16 1"/>
+            </default>
+        </default>
+
+        <default class="ua_support">
+            <geom contype="2" conaffinity="2" group="3" rgba=".35 .7 .87 1"/>
+        </default>
+
+        <default class="la_support">
+            <geom contype="4" conaffinity="4" group="3" rgba=".93 .55 .16 1"/>
+        </default>
+
+        <default class="exo_motor">
+            <motor ctrllimited="true" ctrlrange="-1 1"/>
+        </default>
+
+        <default class="strap">
+            <equality solimp=".96 .99 .001 .5 2"/>
+        </default>
+    </default>
+
+    <asset>
+        <mesh name="sAA_vsR" file="sAA_very_simple.stl" scale=".0007 .0007 .0007"/>
+        <mesh name="sFE_vsR" file="sFE_very_simple.stl" scale=".0007 .0007 .0007"/>
+        <mesh name="sIE_vsR" file="sIE_very_simple.stl" scale="-.0007 .0007 .0007"/>
+        <mesh name="eFE_vsR" file="eFE_very_simple.stl" scale=".001 .001 .001"/>
+
+        <texture type="skybox" builtin="gradient" rgb1=".6 .6 .9" rgb2="0 0 0" width="512" height="512"/>
+
+        <texture name="texplane" type="2d" builtin="checker" rgb1=".25 .25 .25" rgb2=".3 .3 .3" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
+        <material name="matplane" reflectance=".3" texture="texplane" texrepeat="1 1" texuniform="true"/>
+    </asset>
+
+    <visual>
+        <rgba haze=".3 .3 .3 1"/>
+    </visual>
+
+    <worldbody>
+        <geom name="floor" pos="0 0 -1" size="0 0 1" type="plane" material="matplane"/>
+        <light directional="true" diffuse=".8 .8 .8" specular=".2 .2 .2" pos="0 0 5" dir="0 0 -1"/>
+
+        <body name="thorax" pos="-.0157 .2097 .0231" childclass="torso">
+            <geom name="torso1" type="capsule" fromto=".0634 -.0586 -.0437 .0634 .0814 -.0437" size=".07"/>
+            <geom name="head" type="sphere" pos=".0634 .0114 .1463" size=".09"/>
+            <geom name="uwaist" type="capsule" fromto=".0534 -.0486 -.1637 .0534 .0714 -.1637" size=".06"/>
+            <geom name="lwaist" type="capsule" fromto=".0534 -.0486 -.3037 .0534 .0714 -.3037" size=".06"/>
+            <geom name="butt" type="capsule" fromto=".033 -.0586 -.4687 .033 .0814 -.4687" size=".09"/>
+
+            <!-- Shoulder muscle sites -->
+            <site name="lat_dorsi_thor-P1" pos="-.017 -.01 -.10505"/>
+            <site name="lat_dorsi_lumb-P1" pos="-.0002 -.01495 -.2249"/>
+            <site name="lat_dorsi_illi-P1" pos=".04125 -.0903 -.2468"/>
+            <site name="pect_maj_stern_avg-P1" pos=".16922 -.02628 -.07385"/>
+            <site name="pect_maj_ribs_avg-P1" pos=".14595 -.00795 .02405"/>
+
+            <body name="clavicle_r">
+                <geom name="clavicle_r" type="cylinder" size=".01" fromto="0 0 0 -.0282 -.2077 -.0001"/>
+
+                <!-- Shoulder muscle sites -->
+                <site name="delt_clav_avg-P1" pos=".01804 -.13657 .01128"/>
+                <site name="pect_maj_clav_avg-P1" pos=".01566 -.07287 .01192"/>
+
+                <body name="scapula_r" pos="-.0282 -.2077 -.0001">
+
+                    <geom name="scapula_r" type="cylinder" size=".01" fromto="0 0 0 .0439 -.002 -.023"/>
+                    <inertial pos=".0247 .053 -.0229" mass=".7054" diaginertia=".001 .001 .001"/>
+
+                    <!-- Shoulder muscle sites -->
+                    <site name="delt_ant_avg-P1" pos=".00374 .06638 .00272"/>
+                    <site name="delt_mid_avg-P1" pos=".01758 -.00783 .00354"/>
+                    <site name="supra_avg-P1" pos=".02272 .07205 .01412"/>
+                    <site name="infra_avg-P1" pos=".0048 .09815 -.0456"/>
+                    <site name="subscap_avg-P1" pos=".01647 .07893 -.04978"/>
+                    <site name="ter_min_avg-P1" pos=".01249 .05321 -.05922"/>
+                    <site name="ter_maj_avg-P1" pos=".00864 .09026 -.10074"/>
+                    <site name="coracobr_avg-P1" pos=".07924 .01029 -.01058"/>
+
+                    <!-- Elbow flexor/extensor sites -->
+                    <site name="bic_l-P1" pos=".04288 .01401 -.00249"/>
+                    <site name="bic_b_avg-P1" pos=".08244 .00915 -.00833"/>
+                    <site name="tric_long_avg-P2" pos=".03083 .02581 -.04169"/>
+                </body>
+            </body>
+        </body>
+
+        <body name="humerus_r" childclass="arm">
+            <!-- <joint name="gh_z" axis="1 0 0"/>
+            <joint name="gh_x" axis="0 1 0" ref="-90"/>
+            <joint name="gh_y" axis="0 0 -1" limited="true" range="-80 85"/> -->
+            <joint name="gh_x" axis="0 1 0" limited="true" range="-95 5" ref="-90"/>
+            <joint name="gh_z" axis="0 0 1" limited="true" range="-95 5"/>
+            <joint name="gh_y" axis="1 0 0" limited="true" range="-80 85"/>
+            <!-- <joint type="ball"/> -->
+
+            <xacro:fromto_geom_ua name="humerus_r" x=".2907" y="-.0058" z="-.0049"/>
+            <xacro:x_cylinder_inertial x="${ulna_r_x/2}" y="${ulna_r_y/2}" z="${ulna_r_z/2}" R="${R_ua}" L="${ulna_r_x}" M="${M_ua}" s="${scale_ua*rescaling_ua}"/>
+
+            <!-- Shoulder muscle sites -->
+            <xacro:site_ua name="delt_ant_avg-P2" x=".10386" y="-.01451" z="-.00724"/>
+            <xacro:site_ua name="delt_mid_avg-P2" x=".10267" y="-.01684" z="-.00097"/>
+            <xacro:site_ua name="delt_clav_avg-P2" x=".10735" y="-.01638" z=".01038"/>
+            <xacro:site_ua name="ter_min_avg-P2" x=".0051" y="-.02655" z="-.00853"/>
+            <xacro:site_ua name="ter_maj_avg-P2" x=".0695" y=".0048" z=".00963"/>
+            <xacro:site_ua name="supra_avg-P2" x="-.0159" y="-.01774" z=".00552"/>
+            <xacro:site_ua name="infra_avg-P2" x="-.01547" y="-.01798" z="-.00814"/>
+            <xacro:site_ua name="subscap_avg-P2" x="-.0015" y=".00617" z=".02045"/>
+            <xacro:site_ua name="pect_maj_stern_avg-P2" x=".06748" y="-.01078" z=".01714"/>
+            <xacro:site_ua name="pect_maj_ribs_avg-P2" x=".05923" y="-.01111" z=".0178"/>
+            <xacro:site_ua name="pect_maj_clav_avg-P2" x=".07144" y="-.01148" z=".01682"/>
+            <xacro:site_ua name="lat_dorsi_thor-P2" x=".04118" y="-.00176" z=".01744"/>
+            <xacro:site_ua name="lat_dorsi_lumb-P2" x=".04118" y="-.00176" z=".01744"/>
+            <xacro:site_ua name="lat_dorsi_illi-P2" x=".04118" y="-.00176" z=".01744"/>
+            <xacro:site_ua name="coracobr_avg-P2" x=".1617" y=".00522" z=".00501"/>
+
+            <!-- Elbow flexor/extensor sites -->
+            <xacro:site_ua name="tric_med_avg-P1" x=".17415" y=".001432" z="-.00827"/>
+            <xacro:site_ua name="tric_lat_avg-P1" x=".07102" y="-.00863" z="-.010792"/>
+            <xacro:site_ua name="bic_l-P2" x="-.0001" y="-.0217" z=".0011"/>
+            <xacro:site_ua name="brachialis_avg-P1" x=".16994" y=".00421" z="-.00129"/>
+            <xacro:site_ua name="brachiorad_avg-P1" x=".21716" y="-.00443" z=".002"/>
+            <xacro:site_ua name="anconeus_avg-P1" x=".30395" y="-.01346" z="-.01568"/>
+
+            <body name="ua_soft_collider" pos="${scale_ua*rescaling_ua*.14} 0 0">
+                <composite type="ellipsoid" count="9 5 5" spacing=".02" prefix="ua">
+                    <geom type="sphere" size=".01" rgba=".9 .9 .9 .5" mass=".003" contype="2" conaffinity="2" group="2"/>
+                </composite>
+            </body>
+
+            <body name="ulna_r" pos="${scale_ua*rescaling_ua*ulna_r_x} ${scale_ua*rescaling_ua*ulna_r_y} ${scale_ua*rescaling_ua*ulna_r_z}">
+
+                <joint name="el_x" axis="0 -1 0" limited="true" range="0 120"/>
+
+                <xacro:fromto_geom_la name="ulna_r" x=".0133" y="-.0171" z=".0163"/>
+                <xacro:x_cylinder_inertial x="${(hand_r_x+radius_r_x)/2}" y="${(hand_r_y+radius_r_y)/2}" z="${(hand_r_z+radius_r_z)/2}" R="${R_la}" L="${hand_r_x}" M="${M_la*ulna_M_frac}" s="${scale_la}"/>
+
+                <!-- Elbow flexor/extensor sites -->
+                <xacro:site_la name="tric_long_avg-P1" x="-.01682" y=".00657" z="-.02635"/>
+                <xacro:site_la name="tric_med_avg-P2" x="-.01771" y=".02561" z="-.02364"/>
+                <xacro:site_la name="tric_lat_avg-P2" x="-.02348" y=".02012" z="-.02043"/>
+                <xacro:site_la name="brachialis_avg-P2" x=".03331" y=".01924" z=".00854"/>
+                <xacro:site_la name="anconeus_avg-P2" x=".03161" y="-.00914" z="-.00822"/>
+
+                <body name="la_soft_collider" pos="${scale_la*.12} ${scale_la*-.01} ${scale_la*.015}">
+                    <composite type="ellipsoid" count="9 4 4" spacing=".02" prefix="la">
+                        <geom type="sphere" size=".01" rgba=".9 .9 .9 .5" mass=".003" contype="4" conaffinity="4" group="2"/>
+                    </composite>
+                </body>
+
+                <body name="radius_r" pos="${scale_la*radius_r_x} ${scale_la*radius_r_y} ${scale_la*radius_r_z}">
+
+                    <xacro:fromto_geom_la name="radius_r" x=".263" y="0" z="0"/>
+                    <xacro:x_cylinder_inertial x="${hand_r_x/2}" y="${hand_r_y/2}" z="${hand_r_z/2}" R="${R_la}" L="${hand_r_x}" M="${M_la*(1-ulna_M_frac)}" s="${scale_la}"/>
+
+                    <!-- Elbow flexor/extensor sites -->
+                    <xacro:site_la name="bic_l-P3" x=".03809" y=".00282" z=".00202"/>
+                    <xacro:site_la name="bic_b_avg-P2" x=".03809" y=".00282" z=".00202"/>
+                    <xacro:site_la name="brachiorad_avg-P2" x=".26513" y=".00412" z=".01037"/>
+
+                    <body name="hand_r" pos="${scale_la*hand_r_x} ${scale_la*hand_r_y} ${scale_la*hand_r_z}" childclass="hand">
+                        <geom name="palm" type="box" size=".045 .04 .01" pos=".045 0 0" mass=".5"/>
+
+                        <body name="fingers_prox" pos=".09 0 0" childclass="finger_prox">
+                            <geom name="FFP" fromto="0 .024 0 .03 .024 0"/>
+                            <geom name="MFP" fromto="0 -.008 0 .03 -.008 0"/>
+                            <geom name="RFP" fromto="0 .008 0 .03 .008 0"/>
+                            <geom name="LFP" fromto="0 -.024 0 .03 -.024 0"/>
+
+                            <body name="fingers_med" pos=".03 0 0" childclass="finger_med">
+                                <geom name="FFM" fromto="0 .024 0 .03 .024 -.01"/>
+                                <geom name="RFM" fromto="0 .008 0 .03 .008 -.01"/>
+                                <geom name="MFM" fromto="0 -.008 0 .03 -.008 -.01"/>
+                                <geom name="LFM" fromto="0 -.024 0 .03 -.024 -.01"/>
+
+                                <body name="fingers_dist" childclass="finger_dist">
+                                    <geom name="FFD" fromto=".03 .024 -.01 .045 .024 -.018"/>
+                                    <geom name="MFD" fromto=".03 -.008 -.01 .045 -.008 -.018"/>
+                                    <geom name="RFD" fromto=".03 .008 -.01 .045 .008 -.018"/>
+                                    <geom name="LFD" fromto=".03 -.024 -.01 .045 -.024 -.018"/>
+                                </body>
+                            </body>
+                        </body>
+
+                        <body name="thumb" pos=".03 .04 0" childclass="thumb">
+                            <geom name="THP" fromto="0 0 0 .02 .025 -.01"/>
+                            <geom name="THM" fromto=".02 .025 -.01 .045 .035 -.018"/>
+                            <geom name="THD" fromto=".045 .035 -.018 .058 .035 -.022"/>
+                        </body>
+                    </body>
+                </body>
+            </body>
+
+        </body>
+
+
+        <body name="Link1" childclass="exoskeleton" xyaxes="0 0 1 0 -1 0">
+            <geom name="sAAr" mesh="sAA_vsR" pos="0 0 -.1421" xyaxes="0 0 -1 0 1 0" class="sAA"/>
+            <inertial pos="0 0.0191 -0.1279" mass="6.712" fullinertia="0.3787893 0.192833 0.1956839 -0.0006556 -0.0006709 0.0540633"/>
+
+            <joint name="J1" axis="0 0 1" range="-90 0"/>
+
+            <body name="Link2" axisangle="1 0 0 90">
+                <geom name="sFEr" mesh="sFE_vsR" pos="0 -.14189 0" quat="0.5 -0.5 0.5 -0.5" class="sFE"/>
+                <inertial pos="0.0001 0.0881 -0.1201" mass="3.487" fullinertia=".1108677 .0689688 .0569634 -.0000977 .0000399 .0384741"/>
+
+                <joint name="J2" axis="0 0 1" range="-90 0" ref="-90"/>
+
+                <body name="Link3" pos="0 .25 0" axisangle="1 0 0 -90">
+                    <geom name="sIEr" mesh="sIE_vsR" euler="0 -90 0" pos="0 0 -.375" class="sIE"/>
+                    <include file="${path_to_root}/${arm_supports_folder}/upper_arm_support.xml"/>
+                    <inertial pos="-0.0006 0.1679 -0.03" mass="1.663" fullinertia=".0266938 .007941 .0235228 .0001282 -.0000556 .0038772"/>
+
+                    <joint name="J3" axis="0 0 1" range="-86 30"/>
+
+                    <body name="ua_strap" pos="0 -.05 -.133" euler="90 0 0">
+                        <composite type="grid" count="8 3" spacing=".015" prefix="uarm_strap_">
+                            <geom type="sphere" size=".01" mass=".05" rgba=".2 .2 .2 1" contype="2" conaffinity="2" group="0" condim="6"/>
+                            <tendon kind="main" group="3" rgba=".2 .2 .2 1"/>
+                        </composite>
+                    </body>
+
+                    <body name="Link4" axisangle="1 0 0 90">
+                        <geom name="eFEr" mesh="eFE_vsR" pos="0 0 -.11" quat="0.61237244 -0.35355339 0.61237244 0.35355339" class="eFE"/>
+                        <include file="${path_to_root}/${arm_supports_folder}/lower_arm_support.xml"/>
+                        <inertial pos="0 0.0707 -0.0803" mass=".494" fullinertia=".0069974 .0035498 .0037622 -.0000009 -.0000004 .001812"/>
+
+                        <joint name="J4" axis="0 0 -1" range="0 125" frictionloss="2.7868500893593593"/>
+
+                        <body name="la_strap" pos="0 .12 .02">
+                            <composite type="grid" count="8 3" spacing=".015" prefix="larm_strap_">
+                                <geom type="sphere" size=".01" mass=".05" rgba=".2 .2 .2 1" contype="4" conaffinity="4" group="0" condim="6"/>
+                                <tendon kind="main" group="3" rgba=".2 .2 .2 1"/>
+                            </composite>
+                        </body>
+                    </body>
+
+                </body>
+            </body>
+        </body>
+    </worldbody>
+
+
+    <tendon>
+        <!-- Shoulder anterior posterior -->
+        <spatial name="pect_maj_stern_avg" class="shoulder_ant">
+            <site site="pect_maj_stern_avg-P1"/>
+            <site site="pect_maj_stern_avg-P2"/>
+        </spatial>
+        <spatial name="pect_maj_ribs_avg" class="shoulder_ant">
+            <site site="pect_maj_ribs_avg-P1"/>
+            <site site="pect_maj_ribs_avg-P2"/>
+        </spatial>
+        <spatial name="pect_maj_clav_avg" class="shoulder_ant">
+            <site site="pect_maj_clav_avg-P1"/>
+            <site site="pect_maj_clav_avg-P2"/>
+        </spatial>
+        <spatial name="supra_avg" class="shoulder_ant">
+            <site site="supra_avg-P1"/>
+            <site site="supra_avg-P2"/>
+        </spatial>
+        <spatial name="coracobr_avg" class="shoulder_ant">
+            <site site="coracobr_avg-P1"/>
+            <site site="coracobr_avg-P2"/>
+        </spatial>
+        <spatial name="delt_clav_avg" class="shoulder_ant">
+            <site site="delt_clav_avg-P1"/>
+            <site site="delt_clav_avg-P2"/>
+        </spatial>
+
+        <spatial name="delt_ant_avg" class="shoulder_post">
+            <site site="delt_ant_avg-P1"/>
+            <site site="delt_ant_avg-P2"/>
+        </spatial>
+        <spatial name="delt_mid_avg" class="shoulder_post">
+            <site site="delt_mid_avg-P1"/>
+            <site site="delt_mid_avg-P2"/>
+        </spatial>
+        <spatial name="infra_avg" class="shoulder_post">
+            <site site="infra_avg-P1"/>
+            <site site="infra_avg-P2"/>
+        </spatial>
+        <spatial name="ter_min_avg" class="shoulder_post">
+            <site site="ter_min_avg-P1"/>
+            <site site="ter_min_avg-P2"/>
+        </spatial>
+        <spatial name="ter_maj_avg" class="shoulder_post">
+            <site site="ter_maj_avg-P1"/>
+            <site site="ter_maj_avg-P2"/>
+        </spatial>
+        <spatial name="subscap_avg" class="shoulder_post">
+            <site site="subscap_avg-P1"/>
+            <site site="subscap_avg-P2"/>
+        </spatial>
+        <spatial name="lat_dorsi_thor" class="shoulder_post">
+            <site site="lat_dorsi_thor-P1"/>
+            <site site="lat_dorsi_thor-P2"/>
+        </spatial>
+        <spatial name="lat_dorsi_lumb" class="shoulder_post">
+            <site site="lat_dorsi_lumb-P1"/>
+            <site site="lat_dorsi_lumb-P2"/>
+        </spatial>
+        <spatial name="lat_dorsi_illi" class="shoulder_post">
+            <site site="lat_dorsi_illi-P1"/>
+            <site site="lat_dorsi_illi-P2"/>
+        </spatial>
+
+        <!-- Elbow flexion extension -->
+        <spatial name="bic_l" class="elbow_flex">
+            <site site="bic_l-P1"/>
+            <site site="bic_l-P2"/>
+            <site site="bic_l-P3"/>
+        </spatial>
+        <spatial name="bic_b_avg" class="elbow_flex">
+            <site site="bic_b_avg-P1"/>
+            <site site="bic_b_avg-P2"/>
+        </spatial>
+        <spatial name="brachialis_avg" class="elbow_flex">
+            <site site="brachialis_avg-P1"/>
+            <site site="brachialis_avg-P2"/>
+        </spatial>
+        <spatial name="brachiorad_avg" class="elbow_flex">
+            <site site="brachiorad_avg-P1"/>
+            <site site="brachiorad_avg-P2"/>
+        </spatial>
+
+        <spatial name="tric_long_avg" class="elbow_ext">
+            <site site="tric_long_avg-P1"/>
+            <site site="tric_long_avg-P2"/>
+        </spatial>
+        <spatial name="tric_med_avg" class="elbow_ext">
+            <site site="tric_med_avg-P1"/>
+            <site site="tric_med_avg-P2"/>
+        </spatial>
+        <spatial name="tric_lat_avg" class="elbow_ext">
+            <site site="tric_lat_avg-P1"/>
+            <site site="tric_lat_avg-P2"/>
+        </spatial>
+        <spatial name="anconeus_avg" class="elbow_ext">
+            <site site="anconeus_avg-P1"/>
+            <site site="anconeus_avg-P2"/>
+        </spatial>
+
+    </tendon>
+
+    <actuator>
+        <!-- Exoskeleton actuators ctrlrange="-60 60" -->
+        <motor name="sAA" gear="60" joint="J1" class="exo_motor"/>
+        <motor name="sFE" gear="60" joint="J2" class="exo_motor"/>
+        <motor name="sIE" gear="60" joint="J3" class="exo_motor"/>
+        <motor name="eFE" gear="60" joint="J4" class="exo_motor"/>
+
+        <!-- Shoulder anterior posterior -->
+        <muscle name="pect_maj_clav_avg" tendon="pect_maj_clav_avg" force="364.4" lengthrange=".067 .22"/>
+        <muscle name="pect_maj_stern_avg" tendon="pect_maj_stern_avg" force="515.4" lengthrange=".17 .31"/>
+        <muscle name="pect_maj_ribs_avg" tendon="pect_maj_ribs_avg" force="390.5" lengthrange=".18 .31"/>
+        <muscle name="coracobr_avg" tendon="coracobr_avg" force="242.5" lengthrange=".12 .2"/>
+        <muscle name="supra_avg" tendon="supra_avg" force="487.8" lengthrange=".061 .11"/>
+        <muscle name="delt_clav_avg" tendon="delt_clav_avg" force="259.9" lengthrange=".028 .19"/>
+
+        <muscle name="delt_ant_avg" tendon="delt_ant_avg" force="1142.6" lengthrange=".022 .19"/>
+        <muscle name="delt_mid_avg" tendon="delt_mid_avg" force="1142.6" lengthrange=".076 .14"/>
+        <muscle name="infra_avg" tendon="infra_avg" force="1210.8" lengthrange=".085 .13"/>
+        <muscle name="subscap_avg" tendon="subscap_avg" force="1377.8" lengthrange=".068 .11"/>
+        <muscle name="ter_min_avg" tendon="ter_min_avg" force="354.3" lengthrange=".045 .1"/>
+        <muscle name="ter_maj_avg" tendon="ter_maj_avg" force="425.4" lengthrange=".055 .2"/>
+        <muscle name="lat_dorsi_thor" tendon="lat_dorsi_thor" force="389.1" lengthrange=".17 .26"/>
+        <muscle name="lat_dorsi_lumb" tendon="lat_dorsi_lumb" force="389.1" lengthrange=".24 .33"/>
+        <muscle name="lat_dorsi_illi" tendon="lat_dorsi_illi" force="281.7" lengthrange=".21 .3"/>
+
+        <!-- Elbow flexion extension (lengthrange regression coeff generated via python script) -->
+        <muscle name="tric_long_avg" tendon="tric_long_avg" force="${ext_F_scale*tric_long_avg_F}" range="${ext_range}" lengthrange="${scale_ua*rescaling_ua*0.2898858674353134+scale_la*-0.016197458114566743+(0.014813932587159961)} ${scale_ua*rescaling_ua*0.28983932485885494+scale_la*0.03052474343079788+(0.015958814565568247)}"/>
+        <muscle name="tric_med_avg" tendon="tric_med_avg" force="${ext_F_scale*tric_med_avg_F}" range="${ext_range}" lengthrange="${scale_ua*rescaling_ua*0.11025358354023396+scale_la*-0.007723164995852885+(9.536098914422753e-05)} ${scale_ua*rescaling_ua*0.11471482122301414+scale_la*0.03231033560947752+(2.263260479895557e-05)}"/>
+        <muscle name="tric_lat_avg" tendon="tric_lat_avg" force="${ext_F_scale*tric_lat_avg_F}" range="${ext_range}" lengthrange="${scale_ua*rescaling_ua*0.2174593522823665+scale_la*-0.019397482467486838+(3.254399653560003e-05)} ${scale_ua*rescaling_ua*0.2188742092502271+scale_la*0.03132642780917889+(1.1464761564716763e-05)}"/>
+        <muscle name="anconeus_avg" tendon="anconeus_avg" force="${ext_F_scale*anconeus_avg_F}" range="${ext_range}" lengthrange="${scale_ua*rescaling_ua*-0.012068284830180099+scale_la*0.030644474331774425+(7.449213124305354e-05)} ${scale_ua*rescaling_ua*0.015429492123690181+scale_la*0.03220790246055242+(1.655685129390433e-05)}"/>
+
+        <muscle name="bic_b_avg" tendon="bic_b_avg" force="${flex_F_scale*bic_b_avg_F}" range="${flex_range}" lengthrange="${scale_ua*rescaling_ua*0.286803757235422+scale_la*-0.037001777203880044+(-0.03717612971895834)} ${scale_ua*rescaling_ua*0.28924156680224494+scale_la*0.053332948386607626+(-0.03668274407864791)}"/>
+        <muscle name="bic_l" tendon="bic_l" force="${flex_F_scale*bic_l_F}" range="${flex_range}" lengthrange="${scale_ua*rescaling_ua*0.3068318592001862+scale_la*-0.038428109448322444+(0.023691288362323648)} ${scale_ua*rescaling_ua*0.3090144736301233+scale_la*0.052231842380234546+(0.02366537408577024)}"/>
+        <muscle name="brachialis_avg" tendon="brachialis_avg" force="${flex_F_scale*brachialis_avg_F}" range="${flex_range}" lengthrange="${scale_ua*rescaling_ua*0.11570357410954872+scale_la*-0.016340639679742135+(8.569697572807788e-05)} ${scale_ua*rescaling_ua*0.11975971126754698+scale_la*0.03466161574458549+(1.601530060188483e-05)}"/>
+        <muscle name="brachiorad_avg" tendon="brachiorad_avg" force="${flex_F_scale*brachiorad_avg_F}" range="${flex_range}" lengthrange="${scale_ua*rescaling_ua*-0.03363878888014726+scale_la*0.2721085867541713+(0.00012339737204430934)} ${scale_ua*rescaling_ua*0.07307081108932577+scale_la*0.280340453089599+(4.15854966179241e-06)}"/>
+
+    </actuator>
+
+    <contact>
+        <exclude body1="clavicle_r" body2="scapula_r"/>
+        <exclude body1="scapula_r" body2="humerus_r"/>
+        <exclude body1="humerus_r" body2="ulna_r"/>
+        <exclude body1="humerus_r" body2="radius_r"/>
+        <exclude body1="ulna_r" body2="radius_r"/>
+        <exclude body1="radius_r" body2="hand_r"/>
+        <exclude body1="hand_r" body2="fingers_prox"/>
+        <exclude body1="fingers_prox" body2="fingers_med"/>
+    </contact>
+
+    <equality>
+        <!-- upper arm strap -->
+        <weld body1="Link3" body2="uarm_strap_B7_0" relpose=".045 -.015 -.148 1 0 0 0" class="strap"/>
+        <weld body1="Link3" body2="uarm_strap_B7_1" relpose=".045 -.015 -.133 1 0 0 0" class="strap"/>
+        <weld body1="Link3" body2="uarm_strap_B7_2" relpose=".045 -.015 -.118 1 0 0 0" class="strap"/>
+
+        <weld body1="Link3" body2="uarm_strap_B0_0" relpose="-.045 -.015 -.148 1 0 0 0" class="strap"/>
+        <weld body1="Link3" body2="uarm_strap_B0_1" relpose="-.045 -.015 -.133 1 0 0 0" class="strap"/>
+        <weld body1="Link3" body2="uarm_strap_B0_2" relpose="-.045 -.015 -.118 1 0 0 0" class="strap"/>
+
+
+        <!-- lower arm strap -->
+        <weld body1="Link4" body2="larm_strap_B7_0" relpose=".045 .105 -.005 1 0 0 0" class="strap"/>
+        <weld body1="Link4" body2="larm_strap_B7_1" relpose=".045 .12 -.005 1 0 0 0" class="strap"/>
+        <weld body1="Link4" body2="larm_strap_B7_2" relpose=".045 .135 -.005 1 0 0 0" class="strap"/>
+
+        <weld body1="Link4" body2="larm_strap_B0_0" relpose="-.045 .105 -.005 1 0 0 0" class="strap"/>
+        <weld body1="Link4" body2="larm_strap_B0_1" relpose="-.045 .12 -.005 1 0 0 0" class="strap"/>
+        <weld body1="Link4" body2="larm_strap_B0_2" relpose="-.045 .135 -.005 1 0 0 0" class="strap"/>
+    </equality>
+</mujoco>

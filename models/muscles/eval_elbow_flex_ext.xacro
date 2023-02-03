@@ -1,0 +1,193 @@
+<mujoco model="eval elbow flexion extension" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <!-- xacro properties -->
+    <xacro:property name="flex_F_scale" value=".71"/>
+    <xacro:property name="ext_F_scale" value="1.23"/>
+    <xacro:property name="flex_range" value="0.95 1.2"/>
+    <xacro:property name="ext_range" value="0.7 .9"/>
+
+    <option timestep=".005" solver="Newton" tolerance="1e-10" cone="pyramidal"/>
+
+    <size njmax="100" nconmax="10"/>
+
+    <visual>
+        <rgba haze=".3 .3 .3 1"/>
+    </visual>
+
+    <default>
+        <joint damping=".3"/>
+        <muscle ctrllimited="true" ctrlrange="0 1"/>
+        <site size=".005"/>
+        <tendon width=".002"/>
+
+
+        <default class="muscle">
+
+            <default class="elbow_muscles">
+                <default class="elbow_flex">
+                    <tendon rgba=".9 .2 .2 1"/>
+                </default>
+
+                <default class="elbow_ext">
+                    <tendon rgba=".2 .9 .2 1"/>
+                </default>
+            </default>
+        </default>
+
+        <default class="human_body">
+            <geom rgba=".1 .1 .1 .4"/>
+            <joint group="1"/>
+
+            <default class="arm">
+                <geom contype="1" conaffinity="1"/>
+            </default>
+            <default class="torso">
+                <geom contype="7" conaffinity="7"/>
+            </default>
+        </default>
+    </default>
+
+    <asset>
+        <texture type="skybox" builtin="gradient" rgb1=".5 .5 .9" rgb2=".3 .3 .7" width="512" height="512"/>
+        <texture name="texplane" type="2d" builtin="checker" rgb1=".2 .2 .4" rgb2=".4 .4 .85" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
+
+        <material name="matplane" reflectance=".3" texture="texplane" texrepeat="1 1" texuniform="true"/>
+    </asset>
+
+    <worldbody>
+        <geom name="floor" pos=".0 .0 -1.0" size="0 0 1" type="plane" material="matplane"/>
+        <light directional="true" diffuse=".8 .8 .8" specular=".2 .2 .2" pos=".0 .0 5.0" dir="0 0 -1"/>
+
+        <body name="thorax" pos="-.0014 -.0152 .0028" childclass="torso">
+            <geom name="torso1" type="capsule" fromto="-0.0586 -0.0634 -0.0437 0.0814 -0.0634 -0.0437" size="0.07"/>
+            <geom name="head" type="sphere" pos="0.0114 -0.0634 0.1463" size=".09"/>
+            <geom name="uwaist" type="capsule" fromto="-0.0486 -0.0534 -0.1637 0.0714 -0.0534 -0.1637" size="0.06"/>
+            <geom name="lwaist" type="capsule" fromto="-0.0486 -0.0534 -0.3037 0.0714 -0.0534 -0.3037" size="0.06"/>
+            <geom name="butt" type="capsule" fromto="-0.0586 -0.033 -0.4687 0.0814 -0.033 -0.4687" size="0.09"/>
+        </body>
+
+        <body name="clavicle_r" pos="-.0014 -.0152 .0028" childclass="arm">
+            <geom name="clavicle_r" type="cylinder" size=".01" fromto=".0 .0 .0 -.2077 .0282 -.0001"/>
+
+            <body name="scapula_r" pos="-.2077 .0282 -.0001">
+
+                <geom name="scapula_r" type="cylinder" size=".01" fromto=".0 .0 .0 -.002 -.0439 -.023"/>
+                <inertial pos=".053 -.0247 -.0229" mass=".7054" diaginertia=".001 .001 .001"/>
+
+                <!-- Elbow muscle sites -->
+                <site name="bic_l-P1" pos=".01401 -.04288 -.00249"/>
+                <site name="bic_b_avg-P1" pos=".00915 -.08244 -.00833"/>
+                <site name="tric_long_avg-P2" pos=".02581 -.03083 -.04169"/>
+
+                <body name="humerus_r" pos="-.002 -.0439 -.023" euler="-90 0 0">
+
+                    <geom name="humerus_r" type="cylinder" size=".01" fromto=".0 .0 .0 -.0058 .0049 -.2907"/>
+                    <inertial pos="-.0064 -.0036 -.0776" mass="2.0519" diaginertia=".0132 .0132 .001988"/>
+
+                    <!-- Elbow muscles sites -->
+                    <site name="tric_med_avg-P1" pos=".001432 .00827 -.17415"/>
+                    <site name="tric_lat_avg-P1" pos="-.00863 .010792 -.07102"/>
+                    <site name="bic_l-P2" pos="-.0217 -.0011 .0001"/>
+                    <site name="brachialis_avg-P1" pos=".00421 .00129 -.16994"/>
+                    <site name="brachiorad_avg-P1" pos="-.00443 -.002 -.21716"/>
+                    <site name="anconeus_avg-P1" pos="-.01346 .01568 -.30395"/>
+
+                    <body name="ulna_r" pos="-.0058 .0049 -.2907">
+                        <joint name="el_x" type="hinge" axis="-1 0 0" limited="true" range="0 120"/>
+
+                        <geom name="ulna_r" type="cylinder" size=".01" fromto=".0 .0 .0 -.0171 -.0163 -.0133"/>
+                        <inertial pos=".0003 -.0039 -.0634" mass=".5464" diaginertia=".0030585 .0030585 .00045325"/>
+
+                        <!-- Elbow muscle sites -->
+                        <site name="tric_long_avg-P1" pos=".00657 .02635 .01682"/>
+                        <site name="tric_med_avg-P2" pos=".02561 .02364 .01771"/>
+                        <site name="tric_lat_avg-P2" pos=".02012 .02043 .02348"/>
+                        <site name="brachialis_avg-P2" pos=".01924 -.00854 -.03331"/>
+                        <site name="anconeus_avg-P2" pos="-.00914 .00822 -.03161"/>
+
+                        <body name="radius_r" pos="-.0171 -.0163 -.0133">
+
+                            <geom name="radius_r" type="cylinder" size=".01" fromto="0 0 0 0 0 -.263"/>
+                            <inertial pos="-.0106 -.0129 -.1179" mass=".5464" diaginertia=".0030585 .0030585 .00045325"/>
+
+                            <!-- Elbow muscles sites -->
+                            <site name="bic_l-P3" pos=".00282 -.00202 -.03809"/>
+                            <site name="bic_b_avg-P2" pos=".00282 -.00202 -.03809"/>
+                            <site name="brachiorad_avg-P2" pos=".00412 -.01037 -.26513"/>
+
+                            <body name="hand_r" pos=".005 0 -.3301">
+                                <geom name="palm" type="ellipsoid" size=".03 .01 .06"/>
+                                <geom name="thumb" type="ellipsoid" pos=".04 0 0" euler="0 60 0" size=".03 .0075 .0075"/>
+                                <inertial pos="0 0 0" mass=".525" diaginertia=".0006387 .0006387 .0001904"/>
+                            </body>
+                        </body>
+                    </body>
+                </body>
+            </body>
+        </body>
+
+
+    </worldbody>
+
+
+    <tendon>
+        <!-- Elbow flexion extension -->
+        <spatial name="bic_l" class="elbow_flex">
+            <site site="bic_l-P1"/>
+            <site site="bic_l-P2"/>
+            <site site="bic_l-P3"/>
+        </spatial>
+        <spatial name="bic_b_avg" class="elbow_flex">
+            <site site="bic_b_avg-P1"/>
+            <site site="bic_b_avg-P2"/>
+        </spatial>
+        <spatial name="brachialis_avg" class="elbow_flex">
+            <site site="brachialis_avg-P1"/>
+            <site site="brachialis_avg-P2"/>
+        </spatial>
+        <spatial name="brachiorad_avg" class="elbow_flex">
+            <site site="brachiorad_avg-P1"/>
+            <site site="brachiorad_avg-P2"/>
+        </spatial>
+
+        <spatial name="tric_long_avg" class="elbow_ext">
+            <site site="tric_long_avg-P1"/>
+            <site site="tric_long_avg-P2"/>
+        </spatial>
+        <spatial name="tric_med_avg" class="elbow_ext">
+            <site site="tric_med_avg-P1"/>
+            <site site="tric_med_avg-P2"/>
+        </spatial>
+        <spatial name="tric_lat_avg" class="elbow_ext">
+            <site site="tric_lat_avg-P1"/>
+            <site site="tric_lat_avg-P2"/>
+        </spatial>
+        <spatial name="anconeus_avg" class="elbow_ext">
+            <site site="anconeus_avg-P1"/>
+            <site site="anconeus_avg-P2"/>
+        </spatial>
+    </tendon>
+
+    <actuator>
+        <!-- Elbow flexion extension -->
+        <muscle name="tric_long_avg" tendon="tric_long_avg" force="${ext_F_scale*798.5}" lengthrange="0.3 0.33" range="${ext_range}"/>
+        <muscle name="tric_med_avg" tendon="tric_med_avg" force="${ext_F_scale*624.3}" lengthrange="0.1 0.15" range="${ext_range}"/>
+        <muscle name="tric_lat_avg" tendon="tric_lat_avg" force="${ext_F_scale*624.3}" lengthrange="0.2 0.25" range="${ext_range}"/>
+        <muscle name="anconeus_avg" tendon="anconeus_avg" force="${ext_F_scale*350}" lengthrange="0.019 0.048" range="${ext_range}"/>
+
+        <muscle name="bic_b_avg" tendon="bic_b_avg" force="${flex_F_scale*624.3}" lengthrange="0.21 0.31" range="${flex_range}"/>
+        <muscle name="bic_l" tendon="bic_l" force="${flex_F_scale*435.6}" lengthrange="0.29 0.38" range="${flex_range}"/>
+        <muscle name="brachialis_avg" tendon="brachialis_avg" force="${flex_F_scale*987.3}" lengthrange="0.099 0.15" range="${flex_range}"/>
+        <muscle name="brachiorad_avg" tendon="brachiorad_avg" force="${flex_F_scale*261.3}" lengthrange="0.24 0.35" range="${flex_range}"/>
+    </actuator>
+
+    <contact>
+        <exclude body1="clavicle_r" body2="scapula_r"/>
+        <exclude body1="scapula_r" body2="humerus_r"/>
+        <exclude body1="humerus_r" body2="ulna_r"/>
+        <exclude body1="humerus_r" body2="radius_r"/>
+        <exclude body1="ulna_r" body2="radius_r"/>
+        <exclude body1="radius_r" body2="hand_r"/>
+    </contact>
+
+</mujoco>

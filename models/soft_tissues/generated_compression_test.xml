@@ -1,0 +1,19 @@
+<mujoco model="Compression test">
+
+    <option timestep=".009" solver="Newton" tolerance="1e-9" cone="pyramidal" jacobian="sparse" iterations="200"/>
+    <size njmax="9000" nconmax="2000"/>
+
+    <worldbody>
+        <light directional="true" cutoff="4" exponent="20" diffuse="1 1 1" specular="0 0 0" pos=".9 .3 2.5" dir="-.9 -.3 -2.5"/>
+
+        <!-- Compressor body -->
+        <include file="../../bin/models/soft_tissues/compressor_body.xml"/>
+
+        <!-- Tested collider-->
+        <include file="../../bin/models/soft_tissues/tested_collider.xml"/>
+
+    </worldbody>
+
+    <!-- Compressor actuator -->
+    <include file="../../bin/models/soft_tissues/compressor_actuator.xml"/>
+</mujoco> 

@@ -1,0 +1,49 @@
+<!-- a basic model allowing to test computation of the distance between to center of rotation
+see src_py/uncertainty/cor_distance.py -->
+<mujoco>
+    <asset>
+        <texture type="skybox" builtin="gradient" rgb1=".6 .6 .9" rgb2="0 0 0" width="512" height="512"/>
+
+        <texture name="texplane" type="2d" builtin="checker" rgb1=".25 .25 .25" rgb2=".3 .3 .3" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
+        <material name="matplane" reflectance=".3" texture="texplane" texrepeat="1 1" texuniform="true"/>
+    </asset>
+
+    <default>
+        <joint damping=".1"/>
+        <default class="arm_l">
+            <geom rgba="0.8 0.5 0.5 1"/>
+        </default>
+        <default class="arm_r">
+            <geom rgba="0.5 0.8 0.5 1"/>
+        </default>
+    </default>
+
+    <worldbody>
+        <geom name="floor" pos="0 0 0" size="0 0 1" type="plane" material="matplane"/>
+        <light directional="true" diffuse=".8 .8 .8" specular=".2 .2 .2" pos="0 0 5" dir="0 0 -1"/>
+
+        <body name="u_arm_l" pos="-.5 0 1.5" childclass="arm_l">
+            <geom type="cylinder" fromto="0 0 0 0 0 -.5" size=".05"/>
+
+            <joint name="shoulder_l" type="hinge" axis="0 1 0" limited="true" range="-90 90"/>
+
+            <body name="l_arm_l" pos="0 0 -.5">
+                <geom type="cylinder" fromto="0 0 0 0 0 -.5" size=".05"/>
+
+                <joint name="elbow_l" type="hinge" axis="0 1 0" limited="true" range="-90 90"/>
+            </body>
+        </body>
+
+        <body name="u_arm_r" pos=".5 0 1.5" childclass="arm_r">
+            <geom type="cylinder" fromto="0 0 0 0 0 -.5" size=".05"/>
+
+            <joint name="shoulder_r" type="hinge" axis="0 1 0" limited="true" range="-90 90"/>
+
+            <body name="l_arm_r" pos="0 0 -.5">
+                <geom type="cylinder" fromto="0 0 0 0 0 -.5" size=".05"/>
+
+                <joint name="elbow_r" type="hinge" axis="0 1 0" limited="true" range="-90 90"/>
+            </body>
+        </body>
+    </worldbody>
+</mujoco>

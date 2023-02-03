@@ -1,0 +1,51 @@
+<mujoco model="Muscled upper limb">
+
+    <default>
+        <tendon rgba=".9 .2 .2 .4"/>
+        <joint damping=".5"/>
+        <site size=".01" rgba="1 1 1 1"/>
+        <default class="translucent">
+            <geom rgba=".8 .8 .8 .3"/>
+        </default>
+    </default>
+
+    <worldbody>
+
+        <body name="upper_arm" pos="0 0 0" childclass="translucent">
+            <geom name="humerus_head" type="sphere" size="0.05"/>
+            <geom name="right_uarm" type="capsule" fromto=".085 0 0 .27 0 0" size="0.04 0.16"/>
+            <inertial pos=".131 0 0" mass="2.1" diaginertia=".0063 .0183 .0205"/>
+
+            <site name="tri_bi" pos=".05 0 0"/>
+
+            <body name="lower_arm" pos=".34 0 0">
+                <geom name="right_larm" type="capsule" fromto="0 0 0 .20 0 0" size="0.031"/>
+                <inertial pos=".118 0 0" mass="1.23" diaginertia=".00156 .00746 .00805"/>
+
+                <joint name="elb-flex" type="hinge" pos="-.0275 0 0" axis="0 1 0" limited="true" range="-125 0"/>
+
+                <site name="biceps2" pos=".01 0 .02"/>
+
+                <body name="hand" pos=".25 0 0">
+                    <geom name="right_hand" type="ellipsoid" size=".06 .03 .01"/>
+                    <geom name="right_thumb" type="ellipsoid" pos="-.02 -.04 0" euler="0 0 -40" size=".03 .0075 .0075"/>
+                </body>
+            </body>
+        </body>
+    </worldbody>
+
+    <tendon>
+        <spatial name="biceps" width=".03">
+            <site site="tri_bi"/>
+            <site site="biceps2"/>
+        </spatial>
+    </tendon>
+
+    <actuator>
+        <muscle name="biceps" tendon="biceps"/>
+    </actuator>
+
+    <contact>
+        <exclude body1="upper_arm" body2="lower_arm"/>
+    </contact>
+</mujoco>

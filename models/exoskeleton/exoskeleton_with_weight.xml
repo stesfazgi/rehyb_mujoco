@@ -1,0 +1,129 @@
+<mujoco model="Exoskeleton with weight">
+    <!-- Model of the NESM exoskeleton with a .5 kg weight attached to its tip
+
+        NB: the position of the CoGs have been adjusted to match the transparent
+        evaluation data (see transparent_eval.py)
+        Therefore they are different from the technical specifications provided
+     -->
+    <compiler meshdir="../../static/meshes/"/>
+
+    <option timestep=".002" solver="Newton" tolerance="1e-9"/>
+    <size njmax="9000" nconmax="2000"/>
+
+    <default>
+        <default class="exoskeleton">
+            <joint type="hinge" damping="1" limited="true" group="0"/>
+        </default>
+
+        <default class="exo_mesh">
+            <geom type="mesh" contype="0" conaffinity="0" group="0"/>
+            <default class="sAA">
+                <geom rgba=".1 .1 .1 1"/>
+            </default>
+            <default class="sFE">
+                <geom rgba=".34 .7 .3 1"/>
+            </default>
+            <default class="sIE">
+                <geom rgba=".35 .7 .87 1"/>
+            </default>
+            <default class="eFE">
+                <geom rgba=".93 .55 .16 1"/>
+            </default>
+        </default>
+
+        <default class="ua_support">
+            <geom contype="2" conaffinity="2" group="2" rgba=".35 .7 .87 1"/>
+        </default>
+
+        <default class="la_support">
+            <geom contype="4" conaffinity="4" group="2" rgba=".93 .55 .16 1"/>
+        </default>
+
+        <default class="exo_motor">
+            <motor ctrlrange="-1 1"/>
+        </default>
+
+        <default class="strap">
+            <equality solimp=".96 .99 .001 .5 2"/>
+        </default>
+
+        <default class="torso">
+            <geom rgba=".5 .5 .5 .4" group="0" contype="0" conaffinity="0"/>
+
+        </default>
+    </default>
+
+    <asset>
+        <mesh name="sAA_vsR" file="sAA_very_simple.stl" scale=".0007 .0007 .0007"/>
+        <mesh name="sFE_vsR" file="sFE_very_simple.stl" scale=".0007 .0007 .0007"/>
+        <mesh name="sIE_vsR" file="sIE_very_simple.stl" scale="-.0007 .0007 .0007"/>
+        <mesh name="eFE_vsR" file="eFE_very_simple.stl" scale=".001 .001 .001"/>
+
+        <texture type="skybox" builtin="gradient" rgb1=".6 .6 .9" rgb2="0 0 0" width="512" height="512"/>
+
+        <texture name="texplane" type="2d" builtin="checker" rgb1=".25 .25 .25" rgb2=".3 .3 .3" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
+        <material name="matplane" reflectance=".3" texture="texplane" texrepeat="1 1" texuniform="true"/>
+    </asset>
+
+    <visual>
+        <rgba haze=".35 .35 .5 1"/>
+    </visual>
+
+    <worldbody>
+        <geom name="floor" pos=".0 .0 -1.0" size="0 0 1" type="plane" material="matplane"/>
+        <light directional="true" diffuse=".8 .8 .8" specular=".2 .2 .2" pos=".0 .0 5.0" dir="0 0 -1"/>
+
+        <body name="Link1" childclass="exoskeleton" xyaxes="0 0 1 0 -1 0">
+            <geom name="sAAr" mesh="sAA_vsR" pos="0 0 -.1421" xyaxes="0 0 -1 0 1 0" class="sAA"/>
+            <inertial pos="0 0.0191 -0.1279" mass="6.712" fullinertia="0.3787893 0.192833 0.1956839 -0.0006556 -0.0006709 0.0540633"/>
+
+            <joint name="J1" axis="0 0 1" range="-90 0"/>
+
+            <body name="Link2" axisangle="1 0 0 90">
+                <geom name="sFEr" mesh="sFE_vsR" pos="0 -.14189 0" quat="0.5 -0.5 0.5 -0.5" class="sFE"/>
+                <inertial pos="0.0001 0.0881 -0.1201" mass="3.487" fullinertia=".1108677 .0689688 .0569634 -.0000977 .0000399 .0384741"/>
+
+                <joint name="J2" axis="0 0 1" range="-90 0" ref="-90"/>
+
+                <body name="Link3" pos="0 .25 0" axisangle="1 0 0 -90">
+                    <geom name="sIEr" mesh="sIE_vsR" euler="0 -90 0" pos="0 0 -.375" class="sIE"/>
+                    <include file="../../bin/models/arm_supports/upper_arm_support.xml"/>
+                    <inertial pos="-0.0006 0.1679 -0.03" mass="1.663" fullinertia=".0266938 .007941 .0235228 .0001282 -.0000556 .0038772"/>
+
+                    <joint name="J3" axis="0 0 1" range="-86 30"/>
+
+                    <body name="Link4" axisangle="1 0 0 90">
+                        <geom name="eFEr" mesh="eFE_vsR" pos="0 0 -.11" quat="0.61237244 -0.35355339 0.61237244 0.35355339" class="eFE"/>
+                        <include file="../../bin/models/arm_supports/lower_arm_support.xml"/>
+                        <inertial pos="0 0.0707 -0.0803" mass=".494" fullinertia=".0069974 .0035498 .0037622 -.0000009 -.0000004 .001812"/>
+
+                        <joint name="J4" axis="0 0 -1" range="0 125" frictionloss="2.7868500893593593"/>
+
+                        <body name="weight" pos="0 .215 0">
+                            <geom type="sphere" size=".01" mass=".5"/>
+                        </body>
+                    </body>
+
+                </body>
+            </body>
+        </body>
+
+        <!-- add human trunk for visualization purpose -->
+        <body name="thorax" pos="-.0157 .2097 .0231" childclass="torso">
+            <geom name="torso1" type="capsule" fromto=".0634 -.0586 -.0437 .0634 .0814 -.0437" size=".07"/>
+            <geom name="head" type="sphere" pos=".0634 .0114 .1463" size=".09"/>
+            <geom name="uwaist" type="capsule" fromto=".0534 -.0486 -.1637 .0534 .0714 -.1637" size=".06"/>
+            <geom name="lwaist" type="capsule" fromto=".0534 -.0486 -.3037 .0534 .0714 -.3037" size=".06"/>
+            <geom name="butt" type="capsule" fromto=".033 -.0586 -.4687 .033 .0814 -.4687" size=".09"/>
+        </body>
+    </worldbody>
+
+    <actuator>
+        <!-- Exoskeleton actuators -->
+        <motor name="sAA" gear="25" joint="J1" class="exo_motor"/>
+        <motor name="sFE" gear="25" joint="J2" class="exo_motor"/>
+        <motor name="sIE" gear="10" joint="J3" class="exo_motor"/>
+        <motor name="eFE" gear="10" joint="J4" class="exo_motor"/>
+    </actuator>
+
+</mujoco>

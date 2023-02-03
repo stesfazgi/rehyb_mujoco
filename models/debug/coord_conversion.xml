@@ -1,0 +1,43 @@
+<!-- <?xml-model href="/home/piccolo/.mujoco/xsd-schema-mjcf/mujoco.xsd"?> -->
+<mujoco model="Coordinate conversion">
+    <!-- Model helping to debug coordinate conversion via mjc api -->
+
+
+    <asset>
+        <texture type="skybox" builtin="gradient" rgb1=".6 .6 .9" rgb2="0 0 0" width="512" height="512"/>
+
+        <texture name="texplane" type="2d" builtin="checker" rgb1=".25 .25 .25" rgb2=".3 .3 .3" width="512" height="512" mark="cross" markrgb=".8 .8 .8"/>
+        <material name="matplane" reflectance=".3" texture="texplane" texrepeat="1 1" texuniform="true"/>
+    </asset>
+
+    <visual>
+        <rgba haze=".35 .35 .5 1"/>
+    </visual>
+
+    <worldbody>
+        <geom name="floor" pos=".0 .0 -1.0" size="0 0 1" type="plane" material="matplane"/>
+        <light directional="true" diffuse=".8 .8 .8" specular=".2 .2 .2" pos=".0 .0 5.0" dir="0 0 -1"/>
+
+        <body name="Link1">
+            <geom name="Geom0" type="cylinder" fromto="0 0 0 0 0 1" size="0.05" rgba="0.9 0.5 0.5 1"/>
+            <joint type="hinge" axis="0 0 1"/>
+
+            <body name="Link2" pos="0 0 1" axisangle="1 0 0 45">
+                <geom name="Geom45" type="cylinder" fromto="0 0 0 0 0 1" size="0.05" rgba="0.5 0.9 0.5 1"/>
+
+                <body name="Link3" pos="0 0 1" axisangle="1 0 0 45">
+                    <geom name="Geom90" type="cylinder" fromto="0 0 0 0 0 1" size="0.05" rgba="0.5 0.5 0.9 1"/>
+
+                    <geom name="GeomDebug" type="box" size=".1 .1 .1" pos=".5 0 .5"/>
+
+                </body>
+            </body>
+        </body>
+
+    </worldbody>
+
+    <contact>
+        <exclude body1="Link1" body2="Link2"/>
+        <exclude body1="Link2" body2="Link3"/>
+    </contact>
+</mujoco>

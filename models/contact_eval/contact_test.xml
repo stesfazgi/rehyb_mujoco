@@ -1,0 +1,15 @@
+<mujoco model="Box on another box">
+
+    <worldbody>
+        <light directional="true" diffuse=".8 .8 .8" specular=".2 .2 .2" pos=".0 .0 5.0" dir="0 0 -1"/>
+
+        <body name="bottom_box">
+            <geom name="bottom_box" type="box" size=".2 .3 .1" rgba=".9 .1 .1 .8"/>
+
+            <body name="top_box" pos="0 0 .3" euler="90 0 0">
+                <geom name="top_box" type="box" size=".1 .05 .15" rgba=".1 .1 .9 .8" mass="10" euler="0 30 0"/>
+                <joint name="top_box" type="slide" axis="0 1 0"/>
+            </body>
+        </body>
+    </worldbody>
+</mujoco>

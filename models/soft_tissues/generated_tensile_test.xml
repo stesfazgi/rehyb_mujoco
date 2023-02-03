@@ -1,0 +1,24 @@
+<mujoco model="Tensile test">
+    <default>
+        <!-- Default damping to ensure stability -->
+        <joint damping=".2"/>
+    </default>
+
+    <option solver="CG" tolerance="1e-6"/>
+    <size nconmax="500" njmax="5000" nstack="5000000"/>
+
+    <worldbody>
+        <light directional="true" cutoff="4" exponent="20" diffuse="1 1 1" specular="0 0 0" pos=".9 .3 2.5" dir="-.9 -.3 -2.5"/>
+
+        <!-- Extender -->
+        <include file="../../bin/models/soft_tissues/test_extender.xml"/>
+
+        <!-- Collider -->
+        <include file="../../bin/models/soft_tissues/test_collider.xml"/>
+
+    </worldbody>
+
+    <include file="../../bin/models/soft_tissues/test_equality_constraints.xml"/>
+
+    <include file="../../bin/models/soft_tissues/test_extender_actuator.xml"/>
+</mujoco> 
