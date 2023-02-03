@@ -1,4 +1,4 @@
-# Upper-limb human=exoskeleton simulation
+# Upper-limb human-exoskeleton simulation using MuJoCo
 
 ## New on the project?
 
