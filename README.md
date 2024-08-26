@@ -1,5 +1,9 @@
 # Upper-limb human-exoskeleton simulation using MuJoCo
 
+This repository contains an implementation of the paper [1]:
+
+[1] S. Tesfazgi, R. Sangouard, S. Endo, S. Hirche. "Uncertainty-aware automated assessment of the arm impedance with upper-limb exoskeletons" in Frontiers in Neurorobotics, 2023 [paper]([https://arxiv.org/abs/2405.08756](https://www.frontiersin.org/journals/neurorobotics/articles/10.3389/fnbot.2023.1167604/full))
+
 ## New on the project?
 
 Open the `setup_guide` folder and follow the specific [README](setup_guide/README.md)!
@@ -37,3 +41,17 @@ Let's describe each of those items concisely:
 - `requirements.txt`: Requirement file of the Python environment used in this project.
 - `simulate.sh`: Bash script allowing to simulate MJCF model using vanilla MuJoCo simulator.
 - `xacro.sh`: Bash script allowing to parse .xacro models into valid .xml models. **It is highly recommended to read [bin/README.md](bin/README.md) before trying `xacro.sh`.**
+
+---
+## References
+If you found this software useful for your research, consider citing us.
+```
+@ARTICLE{Tesfazgi23,
+AUTHOR={Tesfazgi, Samuel  and Sangouard, Ronan  and Endo, Satoshi  and Hirche, Sandra },
+TITLE={Uncertainty-aware automated assessment of the arm impedance with upper-limb exoskeletons},
+JOURNAL={Frontiers in Neurorobotics},
+VOLUME={17},
+YEAR={2023},
+DOI={10.3389/fnbot.2023.1167604},
+ISSN={1662-5218}}
+```
